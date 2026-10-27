@@ -1,0 +1,13 @@
+.next
+node_modules
+.pglite
+coverage
+playwright-report
+test-results
+prisma/migrations
+public/images/products
+package-lock.json
+*.md
+.dev-outbox
+tsconfig.tsbuildinfo
+.vscode
