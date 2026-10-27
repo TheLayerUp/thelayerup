@@ -1,6 +1,6 @@
 # Deployment
 
-Target: **Vercel** (app) + **Neon** (Postgres, Mumbai `ap-south-1`) + **Resend** (email) +
+Target: **Vercel** (app) + **Neon** (Postgres, Singapore `ap-southeast-1`) + **Resend** (email) +
 **Razorpay** (payments) on **https://thelayerup.in**.
 
 ```mermaid
@@ -17,7 +17,8 @@ flowchart LR
 ## One-time setup
 
 ### 1. Database (Neon)
-1. Create a project in region **AWS Asia Pacific (Mumbai)**.
+1. Create a project in region **Singapore** (`ap-southeast-1` / Vercel `sin1`). Neon has no India
+   region; Singapore is the closest. The app's functions must run in the same region (see step 3).
 2. Copy two connection strings from *Connection details*:
    - **Pooled** (host contains `-pooler`) → `DATABASE_URL`, append `&pgbouncer=true`
    - **Direct** → `DIRECT_URL`
@@ -33,7 +34,7 @@ flowchart LR
 2. Add env vars for **Production** (and Preview with test keys). Full list:
    [configuration](configuration.md). Include `CRON_SECRET` (`openssl rand -hex 32`) and
    `STORE_NOTIFY_EMAIL` — the boot log warns if either is missing.
-   `vercel.json` already pins functions to **Mumbai (`bom1`)**, next to the Neon database, and
+   `vercel.json` already pins functions to **Singapore (`sin1`)**, next to the Neon database, and
    schedules the daily cleanup job — nothing to set in the dashboard for these.
 3. *Domains*: add `thelayerup.in` and `www.thelayerup.in` (redirect www → apex). Update DNS at your
    registrar as Vercel instructs.

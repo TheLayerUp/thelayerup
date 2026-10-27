@@ -46,5 +46,5 @@ without it (`src/server/env.ts`).
 | `src/server/security/rate-limit.ts` → `RULES` | Rate-limit budgets |
 | `src/app/globals.css` | Design tokens (colours for light/dark, fonts) |
 | `next.config.ts` | Cache Components, security headers, image hosts |
-| `vercel.json` | Function region (`bom1`, Mumbai) and cron schedule |
+| `vercel.json` | Function region (`sin1`, Singapore — must match the Neon region) and cron schedule |
 | `prisma/data/catalog.ts` | Sample categories/products for seeding |

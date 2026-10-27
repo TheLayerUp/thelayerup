@@ -69,7 +69,7 @@ What is built, what changed from the [original product plan](product-plan.md), a
 
 ### Before launch (your checklist)
 
-1. Create Neon (Mumbai region) + Vercel + Resend accounts and set the env vars listed in the [deployment guide](deployment.md), including `CRON_SECRET` and `STORE_NOTIFY_EMAIL`. Verify `thelayerup.in` in Resend (SPF/DKIM) so emails don't land in spam.
+1. Create Neon (Singapore region) + Vercel + Resend accounts and set the env vars listed in the [deployment guide](deployment.md), including `CRON_SECRET` and `STORE_NOTIFY_EMAIL`. Verify `thelayerup.in` in Resend (SPF/DKIM) so emails don't land in spam.
 2. Create the Razorpay webhook and set `RAZORPAY_WEBHOOK_SECRET`.
 3. Seed production once with a strong admin password, then add real products and photos.
 4. Replace the placeholder email (`hello@thelayerup.in`) and Instagram handle in `site.ts` if they differ.

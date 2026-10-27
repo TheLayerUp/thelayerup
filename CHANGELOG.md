@@ -6,7 +6,7 @@ versions follow [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- `vercel.json`: functions run in Mumbai (`bom1`) next to the Neon database; daily cleanup cron.
+- `vercel.json`: functions run in Singapore (`sin1`) next to the Neon database (Neon has no India region); daily cleanup cron.
 - `/api/cron/cleanup` (protected by `CRON_SECRET`): removes abandoned `PENDING` orders older than
   7 days, expired rate-limit rows and expired reset tokens.
 - `/api/health` for uptime monitors (checks the database).
