@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thelayerup
-  DIRECT_URL: postgresql://postgres:postgres@localhost:5432/thelayerup
+  POSTGRES_PRISMA_URL: postgresql://postgres:postgres@localhost:5432/thelayerup
+  DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@localhost:5432/thelayerup
   AUTH_SECRET: ci-only-secret-not-used-anywhere-else-0123456789
   NEXT_PUBLIC_APP_URL: https://thelayerup.in
   SEED_ADMIN_EMAIL: admin@ci.local

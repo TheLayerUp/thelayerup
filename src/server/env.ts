@@ -3,8 +3,8 @@ import { z } from "zod";
 const DEV_SECRET_PREFIX = "dev-only-secret";
 
 const productionSchema = z.object({
-  DATABASE_URL: z.string().startsWith("postgres"),
-  DIRECT_URL: z.string().startsWith("postgres"),
+  POSTGRES_PRISMA_URL: z.string().startsWith("postgres"),
+  DATABASE_URL_UNPOOLED: z.string().startsWith("postgres"),
   AUTH_SECRET: z
     .string()
     .min(32, "AUTH_SECRET must be at least 32 characters (run `npx auth secret`)")

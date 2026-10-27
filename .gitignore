@@ -53,3 +53,6 @@ next-env.d.ts
 /.dev-outbox
 /playwright-report
 /test-results
+
+# Vercel CLI project link
+/.vercel

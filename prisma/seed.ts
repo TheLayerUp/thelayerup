@@ -5,7 +5,7 @@ import { categories, products } from "./data/catalog";
 
 const prisma = new PrismaClient();
 
-const isLocalDb = /@(localhost|127.0.0.1)[:/]/.test(process.env.DATABASE_URL ?? "");
+const isLocalDb = /@(localhost|127.0.0.1)[:/]/.test(process.env.POSTGRES_PRISMA_URL ?? "");
 // Placeholder products belong in dev/CI, not on the live store, unless asked for.
 const seedSamples = isLocalDb || process.env.CI === "true" || process.env.SEED_SAMPLE_PRODUCTS === "true";
 

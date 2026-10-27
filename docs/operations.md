@@ -72,4 +72,4 @@ They must sign out and in again. Removing the role takes effect immediately.
 ## Backups
 
 Neon keeps point-in-time history (7 days on the free plan, longer on paid). Before big changes,
-create a branch. For an offline copy: `pg_dump "$DIRECT_URL" > backup.sql`.
+create a branch. For an offline copy: `pg_dump "$DATABASE_URL_UNPOOLED" > backup.sql`.

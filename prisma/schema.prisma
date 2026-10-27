@@ -7,9 +7,10 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  // Neon/Supabase: DATABASE_URL is the pooled URL, DIRECT_URL the direct one (used by migrations).
-  directUrl = env("DIRECT_URL")
+  // Names match what Vercel's Neon integration sets: the pooled URL with Prisma's
+  // pgbouncer flag, and the direct URL (used by migrations).
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum Role {

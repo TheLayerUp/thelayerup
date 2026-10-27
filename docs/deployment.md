@@ -17,12 +17,11 @@ flowchart LR
 ## One-time setup
 
 ### 1. Database (Neon)
-1. Create a project in region **Singapore** (`ap-southeast-1` / Vercel `sin1`). Neon has no India
+1. In Vercel → *Storage → Create Database → Neon*, region **Singapore** (`sin1`). Neon has no India
    region; Singapore is the closest. The app's functions must run in the same region (see step 3).
-2. Copy two connection strings from *Connection details*:
-   - **Pooled** (host contains `-pooler`) → `DATABASE_URL`, append `&pgbouncer=true`
-   - **Direct** → `DIRECT_URL`
-3. Optional: enable Neon's Vercel integration to get a database **branch per preview deploy**.
+2. Connect it to the project. The integration sets `POSTGRES_PRISMA_URL` (pooled, for the app) and
+   `DATABASE_URL_UNPOOLED` (direct, for migrations) — the two names the Prisma schema reads.
+   Nothing to copy by hand.
 
 ### 2. Email (Resend)
 1. Add domain `thelayerup.in`, add the SPF/DKIM DNS records it shows, wait for *Verified*.
@@ -50,7 +49,7 @@ flowchart LR
 2. Seed once from your machine against production:
 
    ```bash
-   DATABASE_URL="<pooled>" DIRECT_URL="<direct>" \
+   POSTGRES_PRISMA_URL="<pooled>" DATABASE_URL_UNPOOLED="<direct>" \
    SEED_ADMIN_EMAIL="you@thelayerup.in" SEED_ADMIN_PASSWORD="<12+ chars, unique>" \
    npm run db:seed
    ```

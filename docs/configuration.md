@@ -8,8 +8,8 @@ without it (`src/server/env.ts`).
 
 | Variable | Required in prod | Boot check | Description |
 |---|---|---|---|
-| `DATABASE_URL` | ✅ | ✅ | Postgres URL used by the app. Neon: the **pooled** URL with `&pgbouncer=true`. |
-| `DIRECT_URL` | ✅ | ✅ | Direct (non-pooled) URL — used by `prisma migrate`. Locally the same as `DATABASE_URL`. |
+| `POSTGRES_PRISMA_URL` | ✅ | ✅ | Postgres URL used by the app: the **pooled** URL with `pgbouncer=true`. Set automatically by Vercel's Neon integration. |
+| `DATABASE_URL_UNPOOLED` | ✅ | ✅ | Direct (non-pooled) URL — used by `prisma migrate`. Set automatically by the integration. Locally the same as `POSTGRES_PRISMA_URL`. |
 | `AUTH_SECRET` | ✅ | ✅ (≥ 32 chars, not the dev value) | Signs session cookies. `npx auth secret`. Rotating it signs everyone out. |
 | `AUTH_TRUST_HOST` | when not on Vercel | — | `true` when self-hosting behind a proxy. |
 | `NEXT_PUBLIC_APP_URL` | ✅ | ✅ (https) | Canonical URL: `https://thelayerup.in`. Used in emails, sitemap, metadata. |
