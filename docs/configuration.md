@@ -19,7 +19,8 @@ without it (`src/server/env.ts`).
 | `RAZORPAY_WEBHOOK_SECRET` | ✅ | ✅ | Secret of the webhook you create in the Razorpay dashboard. |
 | `RESEND_API_KEY` | strongly recommended | warns | Without it no emails are sent (order confirmations, password resets). |
 | `EMAIL_FROM` | with Resend | — | e.g. `TheLayerUp <orders@thelayerup.in>`; domain must be verified in Resend. |
-| `STORE_NOTIFY_EMAIL` | optional | — | Receives new orders, custom requests and contact messages. |
+| `STORE_NOTIFY_EMAIL` | strongly recommended | warns | Receives new orders, custom requests, contact messages, and alerts for oversold or mismatched payments. |
+| `CRON_SECRET` | ✅ | warns | Bearer token Vercel Cron sends to `/api/cron/cleanup`. `openssl rand -hex 32`. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | — | Enables "Continue with Google". Redirect URI: `https://thelayerup.in/api/auth/callback/google`. |
 | `SHIPROCKET_*` | not yet used | — | Reserved for the Shiprocket integration. |
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | for `db:seed` only | — | Creates/promotes the admin. ≥ 12 chars on non-local DBs. |
@@ -45,4 +46,5 @@ without it (`src/server/env.ts`).
 | `src/server/security/rate-limit.ts` → `RULES` | Rate-limit budgets |
 | `src/app/globals.css` | Design tokens (colours for light/dark, fonts) |
 | `next.config.ts` | Cache Components, security headers, image hosts |
+| `vercel.json` | Function region (`bom1`, Mumbai) and cron schedule |
 | `prisma/data/catalog.ts` | Sample categories/products for seeding |

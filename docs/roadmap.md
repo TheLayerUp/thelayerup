@@ -65,16 +65,17 @@ What is built, what changed from the [original product plan](product-plan.md), a
 6. **Order snapshots.** Orders store the address and line items; the `Order → Address` foreign key was dropped.
 7. **Idempotent payment confirmation** via `markOrderPaid` (client verify and webhook). Stock and coupon usage update in the same transaction.
 8. **Readable order numbers** (`TLU-7K3QX9`). Guest tracking needs order number **and** email.
-9. **Policy pages** (`/policies/shipping|privacy|terms`) for Razorpay KYC. ⚠️ Templates, so have them reviewed.
+9. **Policy pages** (`/policies/shipping|refunds|privacy|terms`) for Razorpay KYC. ⚠️ Templates, so have them reviewed.
 
 ### Before launch (your checklist)
 
-1. Create Neon + Vercel + Resend accounts and set the env vars listed in the [deployment guide](deployment.md). Verify `thelayerup.in` in Resend (SPF/DKIM) so emails don't land in spam.
+1. Create Neon (Mumbai region) + Vercel + Resend accounts and set the env vars listed in the [deployment guide](deployment.md), including `CRON_SECRET` and `STORE_NOTIFY_EMAIL`. Verify `thelayerup.in` in Resend (SPF/DKIM) so emails don't land in spam.
 2. Create the Razorpay webhook and set `RAZORPAY_WEBHOOK_SECRET`.
 3. Seed production once with a strong admin password, then add real products and photos.
 4. Replace the placeholder email (`hello@thelayerup.in`) and Instagram handle in `site.ts` if they differ.
 5. Get the policy pages reviewed, complete Razorpay KYC, then switch to `rzp_live_` keys.
 6. **Rotate the Razorpay test secret.** It was shared in a chat; test keys can't move real money, but it's good hygiene.
+7. Point an uptime monitor (Better Stack / UptimeRobot) at `https://thelayerup.in/api/health`.
 
 ---
 
@@ -109,10 +110,9 @@ Ordered by impact for a new Indian D2C store.
 | Item | Why | Notes |
 |---|---|---|
 | Upgrade local Node to 22 → Prisma 7 | Prisma 6 is the previous major | `prisma.config.ts`, driver adapter (`@prisma/adapter-pg` / Neon), replace PGlite with `prisma dev` — [ADR-0003](adr/0003-prisma-6-on-node-20.md) |
-| Stock reservation at checkout | Avoid overselling the last unit | Hold stock for ~15 min on `startCheckout`, release on expiry |
+| Stock reservation at checkout | Stop overselling before it happens | Today an oversell is caught at payment (stock clamped at 0, store alerted). Reserving for ~15 min on `startCheckout` would prevent it |
 | Full Content-Security-Policy | Defence against injected scripts | Nonce-based; allow `checkout.razorpay.com` |
 | Sentry (or similar) | Alerting on errors | Wire into `onRequestError` in `src/instrumentation.ts` |
-| Clean up abandoned `PENDING` orders | Keep tables tidy | Scheduled job (Vercel Cron) deleting pending orders > 7 days |
 | Email verification on sign-up | Trust in account emails | Then revisit [ADR-0009](adr/0009-no-oauth-account-linking.md) |
 | Cloudinary uploads | Admins paste URLs today | Signed uploads from the admin; add host in `src/config/images.ts` |
 | Shiprocket | Manual AWB entry doesn't scale | Helpers exist in `src/server/shipping/shiprocket.ts` |

@@ -23,7 +23,8 @@ const footerLinks = {
   Company: [
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },
-    { label: "Shipping & Returns", href: "/policies/shipping" },
+    { label: "Shipping Policy", href: "/policies/shipping" },
+    { label: "Refunds & Cancellations", href: "/policies/refunds" },
   ],
   Support: [
     { label: "Track Order", href: "/track" },

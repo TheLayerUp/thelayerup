@@ -31,7 +31,10 @@ flowchart LR
 1. Import the GitHub repo. Framework: Next.js. Build command: leave default — Vercel runs
    `vercel-build` (`prisma migrate deploy && next build`). Node.js version: 22.x.
 2. Add env vars for **Production** (and Preview with test keys). Full list:
-   [configuration](configuration.md).
+   [configuration](configuration.md). Include `CRON_SECRET` (`openssl rand -hex 32`) and
+   `STORE_NOTIFY_EMAIL` — the boot log warns if either is missing.
+   `vercel.json` already pins functions to **Mumbai (`bom1`)**, next to the Neon database, and
+   schedules the daily cleanup job — nothing to set in the dashboard for these.
 3. *Domains*: add `thelayerup.in` and `www.thelayerup.in` (redirect www → apex). Update DNS at your
    registrar as Vercel instructs.
 
@@ -54,7 +57,21 @@ flowchart LR
    This creates categories, the two coupons and your admin user. Sample products are skipped on
    non-local databases (`SEED_SAMPLE_PRODUCTS=true` to include them).
 3. Sign in, add real products in `/admin/products`.
-4. Run the [manual release checklist](testing.md#manual-release-checklist).
+4. Check `https://thelayerup.in/api/health` returns `{"status":"ok"}`.
+5. Run the [manual release checklist](testing.md#manual-release-checklist).
+
+### 6. Razorpay KYC
+Razorpay reviewers look for these pages on the live domain — all exist, but the text is a template
+and must be reviewed and match how you actually operate:
+`/policies/terms`, `/policies/privacy`, `/policies/refunds`, `/policies/shipping`, `/contact`.
+
+## Scheduled jobs
+
+| Job | Schedule | What it does |
+|---|---|---|
+| `/api/cron/cleanup` | daily 03:00 IST (`vercel.json`) | Deletes unpaid `PENDING` orders older than 7 days, expired rate-limit rows and expired password-reset tokens. Requires `CRON_SECRET`; returns 401 otherwise. |
+
+Check runs in Vercel → *Settings → Cron Jobs*. Each run logs a `"cron cleanup"` JSON line with counts.
 
 If the server fails to boot, the Vercel *Runtime logs* show `Invalid production environment:` with
 the exact variable at fault.
@@ -84,7 +101,8 @@ Migrations run **before** the new code serves traffic, while the old version is 
 | What | Tool |
 |---|---|
 | Errors | Vercel runtime logs today; add Sentry (`onRequestError` in `instrumentation.ts` is the hook) |
-| Uptime | Better Stack / UptimeRobot on `/` and `/products` |
+| Uptime | Better Stack / UptimeRobot on `/api/health` (200 = app + database OK, 503 = database unreachable) |
+| Stock / payment problems | `STORE_NOTIFY_EMAIL` gets an alert when a paid order had too little stock or the paid amount didn't match |
 | Payments | Razorpay dashboard → webhook delivery logs (failed deliveries are retried by Razorpay) |
 | Email | Resend dashboard → bounces/complaints |
 | Analytics | Vercel Analytics or PostHog (funnel: product → cart → checkout → paid) |

@@ -7,7 +7,7 @@ import { site } from "@/config/site";
 // Terms, Privacy, Refund/Cancellation and Shipping policies to activate an account.
 const policies: Record<string, { title: string; sections: { h: string; p: string }[] }> = {
   shipping: {
-    title: "Shipping, Returns & Refunds",
+    title: "Shipping Policy",
     sections: [
       {
         h: "Processing time",
@@ -17,6 +17,15 @@ const policies: Record<string, { title: string; sections: { h: string; p: string
         h: "Delivery",
         p: `We ship across India through trusted courier partners. Delivery typically takes 3–7 business days after dispatch. Shipping is free on orders above ₹${site.shipping.freeAbove}; a flat ₹${site.shipping.flatRate} applies otherwise. You'll receive a tracking link by email once your order ships.`,
       },
+      {
+        h: "Returns and refunds",
+        p: "See our Refund & Cancellation Policy for damaged items, cancellations and refunds.",
+      },
+    ],
+  },
+  refunds: {
+    title: "Refund & Cancellation Policy",
+    sections: [
       {
         h: "Damaged or defective items",
         p: "If your item arrives damaged or has a printing defect, email us within 48 hours of delivery with photos and your order number. We'll reprint and replace it at no cost, or issue a full refund.",

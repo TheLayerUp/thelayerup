@@ -19,7 +19,7 @@ features is in the [roadmap](roadmap.md).
 | Custom print request | `/custom-order` | Description, material, quantity, budget, deadline, link to a 3D file. Store owner is notified. | `components/forms/InquiryForms.tsx` |
 | Contact | `/contact` | Contact form (owner notified), email/phone/WhatsApp links. | same |
 | About | `/about` | Story, values, process. | `app/(storefront)/about/page.tsx` |
-| Policies | `/policies/shipping`, `/privacy`, `/terms` | Shipping/returns/refunds, privacy, terms — required for Razorpay KYC. **Templates; get them reviewed.** | `app/(storefront)/policies/[slug]/page.tsx` |
+| Policies | `/policies/shipping`, `/refunds`, `/privacy`, `/terms` | Shipping, refunds & cancellations, privacy, terms — required for Razorpay KYC. **Templates; get them reviewed.** | `app/(storefront)/policies/[slug]/page.tsx` |
 | Dark mode | everywhere | Follows the OS by default, toggle in the header, no flash on load. | `app/layout.tsx`, `components/layout/ThemeToggle.tsx` |
 | SEO | — | Per-page metadata, Open Graph, Product JSON-LD, `sitemap.xml`, `robots.txt` (private areas disallowed). | `app/sitemap.ts`, `app/robots.ts` |
 

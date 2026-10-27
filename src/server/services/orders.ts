@@ -169,8 +169,14 @@ export async function createPendingOrder(userId: string, email: string, input: C
  * Marks an order paid exactly once, decrementing stock and coupon usage in the
  * same transaction. Safe to call from both the client verify step and the
  * Razorpay webhook — whichever arrives second is a no-op.
+ *
+ * Stock is checked again here because it can run out between checkout and
+ * payment (two shoppers paying for the last unit). The customer has already
+ * paid, so the order stays PAID; stock is clamped at 0 and the store is told
+ * to restock or refund.
  */
 export async function markOrderPaid(orderId: string, payment: { razorpayPaymentId?: string; method: string }) {
+  const oversold: string[] = [];
   const updated = await prisma.$transaction(async (tx) => {
     const claimed = await tx.order.updateMany({
       where: { id: orderId, status: "PENDING" },
@@ -189,10 +195,14 @@ export async function markOrderPaid(orderId: string, payment: { razorpayPaymentI
     });
     for (const item of order.items) {
       if (!item.productId) continue;
-      await tx.product.update({
-        where: { id: item.productId },
+      const taken = await tx.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.quantity } },
         data: { stock: { decrement: item.quantity } },
       });
+      if (taken.count === 0) {
+        await tx.product.updateMany({ where: { id: item.productId }, data: { stock: 0 } });
+        oversold.push(`${item.productName} × ${item.quantity}`);
+      }
     }
     if (order.couponId) {
       await tx.coupon.update({
@@ -214,6 +224,26 @@ export async function markOrderPaid(orderId: string, payment: { razorpayPaymentI
       ].join("\n"),
       `/admin/orders/${updated.id}`
     );
+    if (oversold.length > 0) {
+      console.error(
+        JSON.stringify({
+          level: "error",
+          message: "order paid without enough stock",
+          order: updated.orderNumber,
+          oversold,
+        })
+      );
+      await notifyStore(
+        `⚠️ Not enough stock for paid order ${updated.orderNumber}`,
+        [
+          "This order was paid, but stock ran out before payment completed:",
+          ...oversold.map((line) => `• ${line}`),
+          "",
+          "Print the extra units, or contact the customer and refund from the Razorpay dashboard.",
+        ].join("\n"),
+        `/admin/orders/${updated.id}`
+      );
+    }
   }
   return updated;
 }

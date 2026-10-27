@@ -29,6 +29,12 @@ export function validateEnv() {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[env] RESEND_API_KEY is not set — order and password-reset emails will NOT be sent.");
   }
+  if (!process.env.STORE_NOTIFY_EMAIL) {
+    console.warn("[env] STORE_NOTIFY_EMAIL is not set — you will NOT be emailed about new orders or payment problems.");
+  }
+  if (!process.env.CRON_SECRET) {
+    console.warn("[env] CRON_SECRET is not set — the daily cleanup job will be rejected.");
+  }
   if (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.startsWith("rzp_test_")) {
     console.warn("[env] Razorpay is in TEST mode — no real money will be collected.");
   }

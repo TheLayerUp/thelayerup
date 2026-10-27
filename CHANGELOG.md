@@ -5,6 +5,20 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `vercel.json`: functions run in Mumbai (`bom1`) next to the Neon database; daily cleanup cron.
+- `/api/cron/cleanup` (protected by `CRON_SECRET`): removes abandoned `PENDING` orders older than
+  7 days, expired rate-limit rows and expired reset tokens.
+- `/api/health` for uptime monitors (checks the database).
+- Separate Refund & Cancellation policy page (`/policies/refunds`) for Razorpay KYC.
+- Boot warnings when `STORE_NOTIFY_EMAIL` or `CRON_SECRET` is missing.
+
+### Fixed
+- Stock could go negative when two shoppers paid for the last unit. Payment now decrements stock
+  only if enough is left; otherwise stock is clamped at 0 and the store is alerted.
+- The Razorpay webhook returned 500 on a malformed body (now 400), and an amount mismatch was only
+  logged (the store is now alerted).
+
 ## [1.0.0] — 2026-10-27 — Launch candidate
 
 ### Added
