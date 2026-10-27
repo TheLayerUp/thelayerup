@@ -46,6 +46,9 @@ next-env.d.ts
 # keep the env template
 !.env.example
 
+# personal Claude Code settings
+/.claude/settings.local.json
+
 # dev email outbox and test output
 /.dev-outbox
 /playwright-report
