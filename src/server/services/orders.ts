@@ -7,6 +7,7 @@ import { shippingFor, site } from "@/config/site";
 import { couponDiscount, couponProblem } from "@/lib/pricing";
 import { formatPrice } from "@/lib/utils";
 import { notifyStore, sendOrderConfirmation } from "@/server/email";
+import { rewardReferrer } from "@/server/services/referrals";
 import type { CheckoutInput } from "@/lib/validators";
 
 export type PricedLine = {
@@ -119,7 +120,13 @@ function newOrderNumber() {
   return `${site.orderPrefix}-${out}`;
 }
 
-export async function createPendingOrder(userId: string, email: string, input: CheckoutInput, priced: PricedCart) {
+export async function createPendingOrder(
+  userId: string,
+  email: string,
+  input: CheckoutInput,
+  priced: PricedCart,
+  codFee = 0
+) {
   const { address } = input;
 
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -127,12 +134,15 @@ export async function createPendingOrder(userId: string, email: string, input: C
       return await prisma.order.create({
         data: {
           orderNumber: newOrderNumber(),
+          locale: input.locale,
           userId,
           email,
           subtotal: priced.subtotal,
           discount: priced.discount,
           shippingCost: priced.shipping,
-          total: priced.total,
+          codFee,
+          total: priced.total + codFee,
+          paymentMethod: codFee ? "COD" : "RAZORPAY",
           notes: input.notes || null,
           couponId: priced.coupon?.id,
           couponCode: priced.coupon?.code,
@@ -176,16 +186,29 @@ export async function createPendingOrder(userId: string, email: string, input: C
  * to restock or refund.
  */
 export async function markOrderPaid(orderId: string, payment: { razorpayPaymentId?: string; method: string }) {
+  return confirmOrder(orderId, {
+    status: "PAID",
+    paidAt: new Date(),
+    paymentMethod: payment.method,
+    razorpayPaymentId: payment.razorpayPaymentId,
+  });
+}
+
+/**
+ * Places a cash-on-delivery order: it goes straight to PROCESSING, unpaid.
+ * paidAt is set when the order is marked delivered (cash collected).
+ */
+export async function placeCodOrder(orderId: string) {
+  return confirmOrder(orderId, { status: "PROCESSING", paymentMethod: "COD" });
+}
+
+/** Claims a PENDING order once, then holds stock, counts the coupon and sends emails. */
+async function confirmOrder(orderId: string, claim: Prisma.OrderUpdateManyMutationInput) {
   const oversold: string[] = [];
   const updated = await prisma.$transaction(async (tx) => {
     const claimed = await tx.order.updateMany({
       where: { id: orderId, status: "PENDING" },
-      data: {
-        status: "PAID",
-        paidAt: new Date(),
-        paymentMethod: payment.method,
-        razorpayPaymentId: payment.razorpayPaymentId,
-      },
+      data: claim,
     });
     if (claimed.count === 0) return null;
 
@@ -215,10 +238,16 @@ export async function markOrderPaid(orderId: string, payment: { razorpayPaymentI
 
   if (updated) {
     revalidateTag("products", "max");
+    // COD orders reward the referrer on delivery instead (see updateOrderStatus).
+    if (claim.status === "PAID") {
+      await rewardReferrer(updated.userId).catch((err) => console.error("[referral]", err));
+    }
     await sendOrderConfirmation(updated).catch((err) => console.error("[email] order confirmation failed", err));
+    const cod = updated.paymentMethod === "COD";
     await notifyStore(
-      `New order ${updated.orderNumber} — ${formatPrice(updated.total)}`,
+      `New ${cod ? "COD " : ""}order ${updated.orderNumber} — ${formatPrice(updated.total)}`,
       [
+        ...(cod ? [`💵 Cash on delivery: call or WhatsApp ${updated.shipPhone} to confirm before printing.`, ""] : []),
         `${updated.shipName}, ${updated.shipCity}`,
         ...updated.items.map((i) => `• ${i.productName} × ${i.quantity}`),
       ].join("\n"),
@@ -236,7 +265,7 @@ export async function markOrderPaid(orderId: string, payment: { razorpayPaymentI
       await notifyStore(
         `⚠️ Not enough stock for paid order ${updated.orderNumber}`,
         [
-          "This order was paid, but stock ran out before payment completed:",
+          "This order was placed, but stock ran out before it completed:",
           ...oversold.map((line) => `• ${line}`),
           "",
           "Print the extra units, or contact the customer and refund from the Razorpay dashboard.",

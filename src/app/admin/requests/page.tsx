@@ -39,7 +39,15 @@ export default async function AdminRequests() {
               <article key={r.id} className="rounded-3xl border border-border bg-surface p-5 text-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold">{r.name}</p>
+                    <p className="font-semibold">
+                      {r.name}
+                      {r.company && <span className="font-normal text-muted-foreground"> · {r.company}</span>}
+                      {r.kind === "BULK" && (
+                        <span className="ml-2 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-bold text-background">
+                          BULK
+                        </span>
+                      )}
+                    </p>
                     <p className="text-muted-foreground">
                       {r.email} · {r.phone}
                     </p>

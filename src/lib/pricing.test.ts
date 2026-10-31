@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { couponDiscount, couponProblem, toPaise, type CouponRule } from "./pricing";
+import { codFeeFor, couponDiscount, couponProblem, toPaise, type CouponRule } from "./pricing";
 import { shippingFor } from "@/config/site";
 import { isAllowedImageUrl } from "@/config/images";
 import { addressSchema, checkoutSchema } from "./validators";
@@ -91,5 +91,18 @@ describe("isAllowedImageUrl", () => {
     expect(isAllowedImageUrl("http://res.cloudinary.com/x/y.jpg")).toBe(false);
     expect(isAllowedImageUrl("https://evil.example.com/a.png")).toBe(false);
     expect(isAllowedImageUrl("//evil.example.com/a.png")).toBe(false);
+  });
+});
+
+describe("codFeeFor", () => {
+  const cod = { enabled: true, fee: 49, maxOrder: 5000 };
+  it("charges the fee up to the cap", () => {
+    expect(codFeeFor(999, cod)).toBe(49);
+    expect(codFeeFor(5000, cod)).toBe(49);
+  });
+  it("is unavailable above the cap, for empty carts, or when disabled", () => {
+    expect(codFeeFor(5001, cod)).toBeNull();
+    expect(codFeeFor(0, cod)).toBeNull();
+    expect(codFeeFor(999, { ...cod, enabled: false })).toBeNull();
   });
 });

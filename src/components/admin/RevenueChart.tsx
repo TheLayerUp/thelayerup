@@ -22,6 +22,7 @@ export default function RevenueChart({ data }: { data: Point[] }) {
   const max = niceMax(Math.max(...data.map((d) => d.revenue)));
   const ticks = [0, max / 2, max];
   const active = hover !== null ? data[hover] : null;
+  const step = Math.max(2, Math.ceil(data.length / 8));
 
   return (
     <div className="mt-6">
@@ -78,11 +79,11 @@ export default function RevenueChart({ data }: { data: Point[] }) {
         </div>
       </div>
 
-      {/* x-axis: every other day (always including today) to avoid collisions */}
+      {/* x-axis: about 8 labels whatever the range, always including today */}
       <div className="mt-2 ml-[68px] flex gap-[2px] text-[11px] text-muted-foreground">
         {data.map((d, i) => (
-          <span key={d.day} className="flex-1 text-center">
-            {i % 2 === (data.length - 1) % 2 ? fmtDay(d.day) : ""}
+          <span key={d.day} className="flex-1 text-center whitespace-nowrap">
+            {(data.length - 1 - i) % step === 0 ? fmtDay(d.day) : ""}
           </span>
         ))}
       </div>

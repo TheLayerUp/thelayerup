@@ -52,6 +52,7 @@
 
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-display), var(--font-inter), system-ui, sans-serif;
+  --font-hand: var(--font-caveat), "Segoe Print", cursive;
 }
 
 * {
@@ -116,11 +117,148 @@ h3 {
   }
 }
 
+/* Dotted print-bed grid used behind hero art */
+.bg-dots {
+  background-image: radial-gradient(rgb(var(--foreground) / 0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+@keyframes float {
+  50% {
+    translate: 0 -10px;
+  }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Print head sweeping back and forth across the gantry */
+@keyframes sweep {
+  0%,
+  100% {
+    left: 12%;
+  }
+  50% {
+    left: 88%;
+  }
+}
+
+@keyframes fill-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.animate-progress {
+  transform-origin: left;
+  animation: fill-progress 3.2s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.animate-blink {
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+/* Scroll-linked reveal; browsers without view timelines just show content. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Hero windows: each product "prints" bottom-up in visible layer steps, holds, then loops. */
+@keyframes timelapse {
+  0% {
+    clip-path: inset(100% 0 0 0);
+  }
+  62%,
+  94% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0;
+  }
+}
+@keyframes timelapse-nozzle {
+  0% {
+    top: 100%;
+    opacity: 1;
+  }
+  62% {
+    top: 0%;
+    opacity: 1;
+  }
+  64%,
+  100% {
+    top: 0%;
+    opacity: 0;
+  }
+}
+.animate-timelapse {
+  animation: timelapse 7s infinite;
+  animation-timing-function: steps(28, end);
+}
+.animate-timelapse-nozzle {
+  animation: timelapse-nozzle 7s infinite;
+  animation-timing-function: steps(28, end);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-timelapse,
+  .animate-timelapse-nozzle {
+    animation: none !important;
+  }
+  .animate-timelapse-nozzle {
+    display: none;
+  }
+}
+
+/* Devanagari needs room above and below for vowel marks; tight display leading makes lines collide. */
+html:lang(hi-IN) :is(h1, h2, h3) {
+  line-height: 1.25 !important;
+  letter-spacing: normal !important;
+}
+
+/* Set by the close button on the announcement bar (and restored before paint in the root layout). */
+html[data-announce="off"] .announce-bar {
+  display: none;
+}
+
+/* Tamil words run much wider than English; scale the hero headline down so it doesn't wrap word-per-line. */
+html:lang(ta) .hero-title {
+  font-size: clamp(2.1rem, 7.5vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+@media (min-width: 1024px) {
+  html:lang(ta) .hero-title {
+    font-size: clamp(2.4rem, 3.4vw, 3.4rem);
   }
 }

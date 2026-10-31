@@ -26,7 +26,7 @@ export default async function AccountButton() {
       <Link
         href="/account"
         aria-label="My account"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary-strong hover:bg-primary/25"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary-strong hover:bg-primary/25"
       >
         {getInitials(session.user.name || session.user.email || "U")}
       </Link>
@@ -35,5 +35,5 @@ export default async function AccountButton() {
 }
 
 export function AccountButtonFallback() {
-  return <div className="h-9 w-20 animate-pulse rounded-lg bg-surface-2" />;
+  return <div className="h-10 w-20 animate-pulse rounded-lg bg-surface-2" />;
 }

@@ -1,9 +1,11 @@
 import HeroSection from "@/components/home/HeroSection";
+import Marquee from "@/components/home/Marquee";
 import CategorySection from "@/components/home/CategorySection";
-import ProductGrid from "@/components/catalog/ProductGrid";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
 import HowItWorks from "@/components/home/HowItWorks";
 import CTASection from "@/components/home/CTASection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
+import FAQSection from "@/components/home/FAQSection";
 import { getFeaturedProducts } from "@/server/queries/catalog";
 
 export default async function HomePage() {
@@ -11,16 +13,17 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSection />
+      <HeroSection products={featured} />
+      {/* Padding gives the tilted ribbon room so its corners aren't clipped. */}
+      <div className="overflow-hidden py-6">
+        <Marquee />
+      </div>
       <CategorySection />
-      {featured.length > 0 && (
-        <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8">
-          <ProductGrid products={featured} eyebrow="Trending" title="Bestsellers right now" viewAllHref="/products" />
-        </div>
-      )}
+      <FeaturedProducts products={featured} />
       <HowItWorks />
-      <TestimonialsSection />
       <CTASection />
+      <TestimonialsSection />
+      <FAQSection />
     </>
   );
 }

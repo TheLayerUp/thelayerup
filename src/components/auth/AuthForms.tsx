@@ -1,5 +1,6 @@
 "use client";
 
+import { useLang } from "@/i18n/LanguageProvider";
 import { useActionState } from "react";
 import Link from "next/link";
 import Honeypot from "@/components/forms/Honeypot";
@@ -44,13 +45,16 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   );
 }
 
-export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
+export function RegisterForm({ callbackUrl, referral }: { callbackUrl: string; referral?: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(registerUser, {});
+  const { lang } = useLang();
   const e = state.errors ?? {};
   return (
     <form action={action} className="space-y-4">
       <Honeypot />
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
+      {referral && <input type="hidden" name="ref" value={referral} />}
+      <input type="hidden" name="lang" value={lang} />
       <div>
         <Label htmlFor="name">Name</Label>
         <Input id="name" name="name" autoComplete="name" required error={e.name} />

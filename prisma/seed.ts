@@ -13,7 +13,7 @@ async function main() {
   for (const [i, c] of categories.entries()) {
     await prisma.category.upsert({
       where: { slug: c.slug },
-      update: { name: c.name, emoji: c.emoji, description: c.description, displayOrder: i },
+      update: { name: c.name, nameHi: c.nameHi, emoji: c.emoji, description: c.description, displayOrder: i },
       create: { ...c, displayOrder: i },
     });
   }
@@ -25,6 +25,7 @@ async function main() {
   for (const p of seedSamples ? products : []) {
     const data = {
       name: p.name,
+      nameHi: p.nameHi ?? null,
       description: p.description,
       features: p.features,
       price: p.price,

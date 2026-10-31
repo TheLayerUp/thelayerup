@@ -17,7 +17,7 @@ test.describe("admin", () => {
     await page.goto("/admin/products/new");
     await page.getByLabel("Name", { exact: true }).fill("Bad Image Product");
     await page.getByLabel("Category").selectOption({ index: 1 });
-    await page.getByLabel("Description").fill("Checks that unsupported image hosts are refused.");
+    await page.getByLabel("Description", { exact: true }).fill("Checks that unsupported image hosts are refused.");
     await page.getByLabel("Price (₹)", { exact: true }).fill("499");
     await page.getByLabel(/Image URLs/).fill("https://evil.example.com/x.png");
     await page.getByRole("button", { name: "Create product" }).click();

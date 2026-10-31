@@ -17,6 +17,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Dev only: lets phones on the same Wi-Fi (http://192.168.x.x:3000) load the
+  // dev server's scripts. Without this the page never hydrates on a phone, so
+  // nothing interactive works (chat button, hero videos).
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "*.local"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

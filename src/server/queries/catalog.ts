@@ -9,6 +9,7 @@ const NEW_FOR_DAYS = 30;
 const cardSelect = {
   id: true,
   name: true,
+  nameHi: true,
   slug: true,
   price: true,
   compareAtPrice: true,
@@ -16,7 +17,7 @@ const cardSelect = {
   material: true,
   isFeatured: true,
   createdAt: true,
-  category: { select: { name: true, slug: true } },
+  category: { select: { name: true, nameHi: true, slug: true } },
   images: { select: { url: true }, orderBy: { displayOrder: "asc" }, take: 1 },
 } satisfies Prisma.ProductSelect;
 
@@ -25,6 +26,8 @@ type CardRow = Prisma.ProductGetPayload<{ select: typeof cardSelect }>;
 export type ProductCardData = {
   id: string;
   name: string;
+  /** Optional Hindi name (shown when the store is in हिं). */
+  nameHi: string | null;
   slug: string;
   price: number;
   compareAtPrice: number | null;
@@ -32,6 +35,7 @@ export type ProductCardData = {
   material: string | null;
   image: string;
   category: string;
+  categoryHi: string | null;
   isNew: boolean;
 };
 
@@ -39,6 +43,7 @@ function toCard(p: CardRow, now: number): ProductCardData {
   return {
     id: p.id,
     name: p.name,
+    nameHi: p.nameHi,
     slug: p.slug,
     price: p.price,
     compareAtPrice: p.compareAtPrice,
@@ -46,6 +51,7 @@ function toCard(p: CardRow, now: number): ProductCardData {
     material: p.material,
     image: p.images[0]?.url ?? PLACEHOLDER_IMAGE,
     category: p.category.name,
+    categoryHi: p.category.nameHi,
     isNew: now - p.createdAt.getTime() < NEW_FOR_DAYS * 86_400_000,
   };
 }
@@ -80,6 +86,7 @@ export async function getCatalog(query: CatalogQuery) {
     ...(query.q && {
       OR: [
         { name: { contains: query.q, mode: "insensitive" } },
+        { nameHi: { contains: query.q } },
         { description: { contains: query.q, mode: "insensitive" } },
         { category: { name: { contains: query.q, mode: "insensitive" } } },
       ],
@@ -229,4 +236,63 @@ export async function getHighlightReviews(limit = 3) {
       product: { select: { name: true, slug: true } },
     },
   });
+}
+
+export type SearchSuggestion = Pick<
+  ProductCardData,
+  "id" | "name" | "nameHi" | "slug" | "price" | "image" | "category" | "categoryHi"
+>;
+
+/** Type-ahead results for the navbar search. `q` is normalised by the caller. */
+export async function searchSuggestions(q: string, limit = 6): Promise<SearchSuggestion[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("products");
+
+  const rows = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { nameHi: { contains: q } },
+        { category: { name: { contains: q, mode: "insensitive" } } },
+        { material: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+      ],
+    },
+    select: cardSelect,
+    // Name matches feel most relevant, so featured items lead within them.
+    orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
+    take: limit * 2,
+  });
+  const needle = q.toLowerCase();
+  const now = Date.now();
+  return rows
+    .map((r) => toCard(r, now))
+    .sort((a, b) => {
+      const hit = (p: ProductCardData) => p.name.toLowerCase().includes(needle) || Boolean(p.nameHi?.includes(q));
+      return Number(hit(b)) - Number(hit(a));
+    })
+    .slice(0, limit)
+    .map(({ id, name, nameHi, slug, price, image, category, categoryHi }) => ({
+      id,
+      name,
+      nameHi,
+      slug,
+      price,
+      image,
+      category,
+      categoryHi,
+    }));
+}
+
+/** A user's saved products (per-user, so never cached). Archived products drop out. */
+export async function getWishlist(userId: string) {
+  const items = await prisma.wishlistItem.findMany({
+    where: { userId, product: { isActive: true } },
+    orderBy: { addedAt: "desc" },
+    select: { product: { select: cardSelect } },
+  });
+  const now = Date.now();
+  return items.map((i) => toCard(i.product, now));
 }

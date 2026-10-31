@@ -15,6 +15,7 @@ export const RULES = {
   newsletter: { limit: 5, windowSec: 60 * 60 },
   track: { limit: 30, windowSec: 15 * 60 },
   checkout: { limit: 20, windowSec: 15 * 60 },
+  pincode: { limit: 30, windowSec: 15 * 60 },
 } satisfies Record<string, Rule>;
 
 export async function clientIp() {

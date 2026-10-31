@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocalized, useT } from "@/i18n/LanguageProvider";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { Search, X } from "lucide-react";
@@ -7,11 +8,13 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  categories: { slug: string; name: string }[];
+  categories: { slug: string; name: string; nameHi?: string | null }[];
   materials: string[];
 }
 
 export default function CatalogFilters({ categories, materials }: Props) {
+  const t = useT();
+  const loc = useLocalized();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -47,7 +50,7 @@ export default function CatalogFilters({ categories, materials }: Props) {
             key={q}
             name="q"
             defaultValue={q}
-            placeholder="Search products…"
+            placeholder={t("shop.search")}
             aria-label="Search products"
             className="h-11 w-full rounded-xl border border-border bg-surface pr-4 pl-11 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/25"
           />
@@ -59,7 +62,7 @@ export default function CatalogFilters({ categories, materials }: Props) {
             onChange={(e) => update({ material: e.target.value || null })}
             className="sm:w-40"
           >
-            <option value="">All materials</option>
+            <option value="">{t("shop.allMaterials")}</option>
             {materials.map((m) => (
               <option key={m} value={m}>
                 {m}
@@ -72,16 +75,16 @@ export default function CatalogFilters({ categories, materials }: Props) {
             onChange={(e) => update({ sort: e.target.value === "featured" ? null : e.target.value })}
             className="sm:w-44"
           >
-            <option value="featured">Featured</option>
-            <option value="newest">Newest</option>
-            <option value="price-asc">Price: low to high</option>
-            <option value="price-desc">Price: high to low</option>
+            <option value="featured">{t("shop.featured")}</option>
+            <option value="newest">{t("shop.newest")}</option>
+            <option value="price-asc">{t("shop.priceAsc")}</option>
+            <option value="price-desc">{t("shop.priceDesc")}</option>
           </Select>
         </div>
       </div>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-        {[{ slug: "", name: "All" }, ...categories].map((cat) => (
+        {[{ slug: "", name: t("shop.all") }, ...categories].map((cat) => (
           <button
             key={cat.slug}
             onClick={() => update({ category: cat.slug || null })}
@@ -92,7 +95,7 @@ export default function CatalogFilters({ categories, materials }: Props) {
                 : "border-border bg-surface text-muted-foreground hover:text-foreground"
             )}
           >
-            {cat.name}
+            {loc(cat.name, "nameHi" in cat ? cat.nameHi : null)}
           </button>
         ))}
         <label className="flex cursor-pointer items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5 text-sm whitespace-nowrap text-muted-foreground">

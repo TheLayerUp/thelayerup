@@ -5,6 +5,7 @@ import { prisma } from "@/server/db";
 import { trackSchema } from "@/lib/validators";
 import { RATE_LIMITED, rateLimit } from "@/server/security/rate-limit";
 import OrderView from "@/components/orders/OrderView";
+import { trackingEvents } from "@/server/shipping/shiprocket";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +50,11 @@ async function Tracker({ searchParams }: Pick<PageProps<"/track">, "searchParams
         })
       : null;
   const searched = Boolean(orderParam && emailParam);
+  // Live courier scans when Shiprocket is connected and the parcel has an AWB.
+  const events =
+    order?.shipping?.awbNumber && ["SHIPPED", "DELIVERED"].includes(order.status)
+      ? await trackingEvents(order.shipping.awbNumber)
+      : null;
 
   return (
     <>
@@ -87,6 +93,24 @@ async function Tracker({ searchParams }: Pick<PageProps<"/track">, "searchParams
       {order && (
         <div className="mt-10">
           <OrderView order={order} showAddress={false} />
+          {events && events.length > 0 && (
+            <section className="mt-6 rounded-3xl border border-border bg-surface p-6">
+              <h2 className="font-semibold">Courier updates</h2>
+              <ol className="mt-4 space-y-4 border-l-2 border-border pl-5">
+                {events.slice(0, 12).map((e, i) => (
+                  <li key={`${e.at}-${i}`} className="relative text-sm">
+                    <span
+                      className={`absolute top-1.5 -left-[27px] h-3 w-3 rounded-full ${i === 0 ? "bg-primary" : "bg-border"}`}
+                    />
+                    <p className="font-medium">{e.status}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {e.location} · {e.at}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
         </div>
       )}
     </>

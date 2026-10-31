@@ -2,12 +2,30 @@
 // Replace with real products (and photos) from the admin panel.
 
 export const categories = [
-  { name: "Lamps & Lighting", slug: "lamps", emoji: "💡", description: "Light that casts patterns" },
-  { name: "Planters & Vases", slug: "planters", emoji: "🪴", description: "Homes for your plants" },
-  { name: "Desk & Tech", slug: "desk-tech", emoji: "🖥️", description: "Stands, organisers & more" },
-  { name: "Keychains", slug: "keychains", emoji: "🔑", description: "Custom & themed" },
-  { name: "Wall Art", slug: "wall-art", emoji: "🎨", description: "Geometric panels" },
-  { name: "Gifts", slug: "gifts", emoji: "🎁", description: "Personalised presents" },
+  {
+    name: "Lamps & Lighting",
+    nameHi: "लैंप और लाइटिंग",
+    slug: "lamps",
+    emoji: "💡",
+    description: "Light that casts patterns",
+  },
+  {
+    name: "Planters & Vases",
+    nameHi: "प्लांटर और फूलदान",
+    slug: "planters",
+    emoji: "🪴",
+    description: "Homes for your plants",
+  },
+  {
+    name: "Desk & Tech",
+    nameHi: "डेस्क और टेक",
+    slug: "desk-tech",
+    emoji: "🖥️",
+    description: "Stands, organisers & more",
+  },
+  { name: "Keychains", nameHi: "कीचेन", slug: "keychains", emoji: "🔑", description: "Custom & themed" },
+  { name: "Wall Art", nameHi: "वॉल आर्ट", slug: "wall-art", emoji: "🎨", description: "Geometric panels" },
+  { name: "Gifts", nameHi: "गिफ़्ट", slug: "gifts", emoji: "🎁", description: "Personalised presents" },
 ] as const;
 
 export type Silhouette = "lamp" | "vase" | "planter" | "stand" | "tag" | "hex" | "frame" | "figure";
@@ -15,6 +33,7 @@ export type Silhouette = "lamp" | "vase" | "planter" | "stand" | "tag" | "hex" |
 export const products: {
   name: string;
   slug: string;
+  nameHi?: string;
   category: (typeof categories)[number]["slug"];
   price: number;
   compareAtPrice?: number;
@@ -32,6 +51,7 @@ export const products: {
   {
     name: "Bluma Wave Desk Lamp",
     slug: "bluma-wave-desk-lamp",
+    nameHi: "ब्लूमा वेव डेस्क लैंप",
     category: "lamps",
     price: 1499,
     compareAtPrice: 1999,
@@ -55,6 +75,7 @@ export const products: {
   {
     name: "Moon Lamp Mini",
     slug: "moon-lamp-mini",
+    nameHi: "मून लैंप मिनी",
     category: "lamps",
     price: 999,
     compareAtPrice: 1299,
@@ -73,6 +94,7 @@ export const products: {
   {
     name: "Spiral Pendant Shade",
     slug: "spiral-pendant-shade",
+    nameHi: "स्पाइरल पेंडेंट शेड",
     category: "lamps",
     price: 1899,
     stock: 6,
@@ -88,6 +110,7 @@ export const products: {
   {
     name: "Geometric Facet Planter",
     slug: "geometric-facet-planter",
+    nameHi: "जियोमेट्रिक फ़ेसेट प्लांटर",
     category: "planters",
     price: 699,
     stock: 25,
@@ -105,6 +128,7 @@ export const products: {
   {
     name: "Ripple Bud Vase",
     slug: "ripple-bud-vase",
+    nameHi: "रिपल बड वास",
     category: "planters",
     price: 549,
     stock: 30,
@@ -121,6 +145,7 @@ export const products: {
   {
     name: "Astronaut Phone Stand",
     slug: "astronaut-phone-stand",
+    nameHi: "एस्ट्रोनॉट फ़ोन स्टैंड",
     category: "desk-tech",
     price: 499,
     stock: 35,
@@ -138,6 +163,7 @@ export const products: {
   {
     name: "Minimal Desk Organiser",
     slug: "minimal-desk-organiser",
+    nameHi: "मिनिमल डेस्क ऑर्गनाइज़र",
     category: "desk-tech",
     price: 899,
     stock: 30,
@@ -154,6 +180,7 @@ export const products: {
   {
     name: "Headphone Stand Arc",
     slug: "headphone-stand-arc",
+    nameHi: "हेडफ़ोन स्टैंड आर्क",
     category: "desk-tech",
     price: 799,
     stock: 18,
@@ -170,6 +197,7 @@ export const products: {
   {
     name: "Custom Name Keychain",
     slug: "custom-name-keychain",
+    nameHi: "कस्टम नाम कीचेन",
     category: "keychains",
     price: 299,
     compareAtPrice: 399,
@@ -188,6 +216,7 @@ export const products: {
   {
     name: "Hexagon Wall Panel Set",
     slug: "hexagon-wall-panel-set",
+    nameHi: "हेक्सागन वॉल पैनल सेट",
     category: "wall-art",
     price: 1299,
     stock: 12,
@@ -204,6 +233,7 @@ export const products: {
   {
     name: "Personalised Photo Frame",
     slug: "personalised-photo-frame",
+    nameHi: "पर्सनलाइज़्ड फ़ोटो फ़्रेम",
     category: "gifts",
     price: 599,
     stock: 40,
@@ -220,6 +250,7 @@ export const products: {
   {
     name: "Crystal Dragon Figurine",
     slug: "crystal-dragon-figurine",
+    nameHi: "क्रिस्टल ड्रैगन मूर्ति",
     category: "gifts",
     price: 1999,
     stock: 4,

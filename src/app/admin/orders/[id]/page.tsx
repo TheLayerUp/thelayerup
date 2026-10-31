@@ -5,7 +5,11 @@ import { prisma } from "@/server/db";
 import { requireAdmin } from "@/server/session";
 import OrderView from "@/components/orders/OrderView";
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPrice } from "@/lib/utils";
+import { site } from "@/config/site";
+import { confirmCodOrder } from "@/server/actions/admin";
+import ShiprocketPanel from "@/components/admin/ShiprocketPanel";
+import { shiprocketEnabled } from "@/server/shipping/shiprocket";
 
 export const metadata = { title: "Order" };
 
@@ -42,6 +46,12 @@ export default async function AdminOrder({ params }: PageProps<"/admin/orders/[i
             awbNumber={order.shipping?.awbNumber ?? ""}
             trackingUrl={order.shipping?.trackingUrl ?? ""}
           />
+          <ShiprocketPanel
+            orderId={order.id}
+            enabled={shiprocketEnabled()}
+            hasShipment={Boolean(order.shipping?.shiprocketOrderId)}
+            canShip={["PAID", "PROCESSING"].includes(order.status)}
+          />
           <div className="rounded-3xl border border-border bg-surface p-5 text-sm">
             <h2 className="font-semibold">Customer</h2>
             <p className="mt-2">{order.user.name ?? order.shipName}</p>
@@ -63,6 +73,34 @@ export default async function AdminOrder({ params }: PageProps<"/admin/orders/[i
             </p>
             {order.razorpayPaymentId && (
               <p className="mt-1 font-mono text-xs break-all text-muted-foreground">{order.razorpayPaymentId}</p>
+            )}
+            {order.paymentMethod === "COD" && (
+              <div className="mt-3 rounded-2xl bg-warning/10 p-3">
+                <p className="font-semibold text-warning">Cash on delivery · collect {formatPrice(order.total)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Includes {formatPrice(order.codFee)} COD fee</p>
+                {order.codConfirmedAt ? (
+                  <p className="mt-2 text-xs font-medium text-success">
+                    ✓ Confirmed with customer {formatDate(order.codConfirmedAt)}
+                  </p>
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <a
+                      href={`https://wa.me/91${order.shipPhone}?text=${encodeURIComponent(`Hi ${order.shipName.split(" ")[0]}, this is ${site.name}. Confirming your cash-on-delivery order ${order.orderNumber} for ${formatPrice(order.total)}. Reply YES to confirm and we'll start printing.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg bg-[#25d366] px-3 py-1.5 text-xs font-semibold text-white"
+                    >
+                      Confirm on WhatsApp
+                    </a>
+                    <form action={confirmCodOrder}>
+                      <input type="hidden" name="id" value={order.id} />
+                      <button className="cursor-pointer rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold">
+                        Mark confirmed
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </aside>

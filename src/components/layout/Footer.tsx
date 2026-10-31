@@ -1,27 +1,22 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
+import { InstagramIcon, TelegramIcon, WhatsAppIcon } from "@/components/icons/BrandIcons";
 import Logo from "./Logo";
 import NewsletterForm from "@/components/forms/NewsletterForm";
-import { site } from "@/config/site";
-
-function Instagram({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} aria-hidden>
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
-    </svg>
-  );
-}
+import { contactLinks, site } from "@/config/site";
+import { T } from "@/i18n/LanguageProvider";
+import type { Key } from "@/i18n/dict";
 
 const footerLinks = {
   Shop: [
     { label: "All Products", href: "/products" },
     { label: "New Arrivals", href: "/products?sort=newest" },
     { label: "Custom Print", href: "/custom-order" },
+    { label: "Bulk & Corporate", href: "/bulk-orders" },
   ],
   Company: [
     { label: "About Us", href: "/about" },
+    { label: "Guides & Blog", href: "/blog" },
     { label: "Contact", href: "/contact" },
     { label: "Shipping Policy", href: "/policies/shipping" },
     { label: "Refunds & Cancellations", href: "/policies/refunds" },
@@ -36,7 +31,7 @@ const footerLinks = {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-surface">
+    <footer className="border-t border-border bg-surface pb-20 sm:pb-0">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 py-12 lg:grid-cols-5">
           <div className="col-span-2 space-y-4">
@@ -47,8 +42,9 @@ export default function Footer() {
             <NewsletterForm />
             <div className="flex gap-2 pt-1">
               {[
-                { href: site.social.instagram, icon: Instagram, label: "Instagram" },
-                { href: `https://wa.me/${site.contact.whatsapp}`, icon: MessageCircle, label: "WhatsApp" },
+                { href: contactLinks.instagram, icon: InstagramIcon, label: "Instagram" },
+                { href: contactLinks.whatsapp, icon: WhatsAppIcon, label: "WhatsApp" },
+                { href: contactLinks.telegram, icon: TelegramIcon, label: "Telegram" },
                 { href: `mailto:${site.contact.email}`, icon: Mail, label: "Email" },
               ].map((s) => (
                 <a
@@ -67,7 +63,9 @@ export default function Footer() {
 
           {Object.entries(footerLinks).map(([heading, links]) => (
             <div key={heading}>
-              <h3 className="mb-4 text-sm font-semibold tracking-wider uppercase">{heading}</h3>
+              <h3 className="mb-4 text-sm font-semibold tracking-wider uppercase">
+                <T k={`footer.${heading}` as Key} />
+              </h3>
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.href}>
@@ -75,7 +73,7 @@ export default function Footer() {
                       href={link.href}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {link.label}
+                      <T k={`footer.${link.label}` as Key} />
                     </Link>
                   </li>
                 ))}

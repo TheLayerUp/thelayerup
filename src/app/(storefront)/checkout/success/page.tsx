@@ -6,6 +6,7 @@ import { CheckCircle2 } from "lucide-react";
 import { prisma } from "@/server/db";
 import { requireUser } from "@/server/session";
 import OrderView from "@/components/orders/OrderView";
+import PushToggle from "@/components/account/PushToggle";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -40,9 +41,14 @@ async function Success({ searchParams }: Pick<PageProps<"/checkout/success">, "s
           Thank you{user.name ? `, ${user.name.split(" ")[0]}` : ""}!
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Your order is confirmed. A confirmation has been sent to{" "}
+          {order.paymentMethod === "COD"
+            ? "Your cash-on-delivery order is placed. We'll message you on WhatsApp to confirm before printing. Details sent to "
+            : "Your order is confirmed. A confirmation has been sent to "}
           <strong className="text-foreground">{order.email}</strong>.
         </p>
+        <div className="mt-4 flex justify-center">
+          <PushToggle compact />
+        </div>
       </div>
       <OrderView order={order} />
       <div className="mt-8 flex justify-center gap-3">

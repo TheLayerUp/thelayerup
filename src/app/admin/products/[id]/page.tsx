@@ -18,6 +18,8 @@ export default async function EditProduct({ params }: PageProps<"/admin/products
     name: "",
     slug: "",
     description: "",
+    nameHi: "",
+    descriptionHi: "",
     features: "",
     price: "",
     compareAtPrice: "",
@@ -28,6 +30,7 @@ export default async function EditProduct({ params }: PageProps<"/admin/products
     weightGrams: "",
     categoryId: "",
     imageUrls: "",
+    modelUrl: "",
     isActive: true,
     isFeatured: false,
   };
@@ -43,6 +46,8 @@ export default async function EditProduct({ params }: PageProps<"/admin/products
       name: p.name,
       slug: p.slug,
       description: p.description,
+      nameHi: p.nameHi ?? "",
+      descriptionHi: p.descriptionHi ?? "",
       features: p.features.join("\n"),
       price: p.price,
       compareAtPrice: p.compareAtPrice ?? "",
@@ -53,6 +58,7 @@ export default async function EditProduct({ params }: PageProps<"/admin/products
       weightGrams: p.weightGrams ?? "",
       categoryId: p.categoryId,
       imageUrls: p.images.map((i) => i.url).join("\n"),
+      modelUrl: p.modelUrl ?? "",
       isActive: p.isActive,
       isFeatured: p.isFeatured,
     };

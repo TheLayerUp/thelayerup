@@ -8,7 +8,10 @@ import { prisma } from "@/server/db";
 import { signIn } from "@/server/auth";
 import { contactSchema, customOrderSchema, registerSchema } from "@/lib/validators";
 import { RATE_LIMITED, isBot, rateLimit } from "@/server/security/rate-limit";
-import { notifyStore, sendPasswordReset } from "@/server/email";
+import { notifyStore, sendCustomerNote, sendPasswordReset } from "@/server/email";
+import { emailCopy } from "@/server/email-copy";
+import { estimateDelivery } from "@/server/shipping/shiprocket";
+import { applyReferral } from "@/server/services/referrals";
 import { site } from "@/config/site";
 
 export type FormState = {
@@ -85,10 +88,12 @@ export async function submitCustomOrder(_: FormState, formData: FormData): Promi
       budget: d.budget || null,
       deadline: d.deadline || null,
       fileUrl: d.fileUrl || null,
+      kind: d.kind,
+      company: d.company || null,
     },
   });
   await notifyStore(
-    `New custom print request from ${d.name}`,
+    `New ${d.kind === "BULK" ? "bulk order" : "custom print"} request from ${d.name}${d.company ? ` (${d.company})` : ""}`,
     `${d.name} (${d.email}, ${d.phone}) — qty ${d.quantity}${d.budget ? `, budget ${d.budget}` : ""}\n\n${d.description}`,
     "/admin/requests"
   );
@@ -110,13 +115,34 @@ export async function registerUser(_: FormState, formData: FormData): Promise<Fo
   if (existing) {
     return { ok: false, errors: { email: "An account with this email already exists. Try signing in." } };
   }
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       name: parsed.data.name,
       email: parsed.data.email,
       passwordHash: await bcrypt.hash(parsed.data.password, 12),
+      locale: formData.get("lang") === "hi" ? "hi" : "en",
     },
   });
+
+  const ref = String(formData.get("ref") ?? "");
+  if (ref) {
+    // A bad or unknown code must never block sign-up.
+    try {
+      const welcome = await applyReferral(user.id, ref);
+      if (welcome) {
+        const r = site.referral;
+        const c = emailCopy(user.locale);
+        await sendCustomerNote(
+          user.email,
+          c.welcomeSubject(r.friendPercent),
+          c.welcomeText(r.friendPercent, r.friendMaxDiscount, welcome),
+          { label: c.startShopping, path: "/products" }
+        );
+      }
+    } catch (err) {
+      console.error("[referral] apply failed", err);
+    }
+  }
 
   await signIn("credentials", {
     email: parsed.data.email,
@@ -189,7 +215,7 @@ export async function requestPasswordReset(_: FormState, formData: FormData): Pr
     }),
   ]);
   const link = `${site.url}/reset-password?email=${encodeURIComponent(email)}&token=${token}`;
-  await sendPasswordReset(email, link).catch((e) => console.error("[email] reset", e));
+  await sendPasswordReset(email, link, user?.locale).catch((e) => console.error("[email] reset", e));
   return done;
 }
 
@@ -217,4 +243,25 @@ export async function resetPassword(_: FormState, formData: FormData): Promise<F
 
   await signIn("credentials", { email, password, redirectTo: "/account" });
   return { ok: true };
+}
+
+export type PincodeResult = { ok: boolean; message: string };
+
+// Printing happens before the parcel is handed to the courier.
+const PRINT_DAYS = { min: 2, max: 4 };
+
+/** "Check delivery" on the product page. Uses live Shiprocket ETAs when configured. */
+export async function checkPincode(pincode: string): Promise<PincodeResult> {
+  if (!/^[1-9]\d{5}$/.test(pincode)) return { ok: false, message: "Enter a valid 6-digit pincode." };
+  if (!(await rateLimit("pincode"))) return { ok: false, message: RATE_LIMITED };
+
+  const estimate = await estimateDelivery(pincode);
+  if (estimate && !estimate.serviceable) {
+    return { ok: false, message: `Couriers don't reach ${pincode} yet. Message us and we'll find a way.` };
+  }
+  const transit = estimate?.transitDays;
+  const range = transit
+    ? `${PRINT_DAYS.min + transit}–${PRINT_DAYS.max + transit} days`
+    : "3–7 business days after printing";
+  return { ok: true, message: `Delivers to ${pincode} in ${range}.` };
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Upload, KeyRound, Cog, Gift, Building2, Wrench, Shapes } from "lucide-react";
 import { CustomOrderForm } from "@/components/forms/InquiryForms";
+import QuoteCalculator from "@/components/forms/QuoteCalculator";
 
 export const metadata: Metadata = {
   title: "Custom 3D printing",
@@ -41,9 +42,12 @@ export default function CustomOrderPage() {
       </section>
 
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_340px] lg:px-8">
-        <div className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
-          <h2 className="mb-6 text-xl font-semibold">Request a quote</h2>
-          <CustomOrderForm />
+        <div className="space-y-8">
+          <QuoteCalculator />
+          <div id="request" className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
+            <h2 className="mb-6 text-xl font-semibold">Request a quote</h2>
+            <CustomOrderForm />
+          </div>
         </div>
 
         <aside className="space-y-6">

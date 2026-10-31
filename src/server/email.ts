@@ -5,6 +5,7 @@ import { Resend } from "resend";
 import type { Order, OrderItem } from "@prisma/client";
 import { site } from "@/config/site";
 import { formatPrice } from "@/lib/utils";
+import { emailCopy } from "@/server/email-copy";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const from = process.env.EMAIL_FROM || `${site.name} <orders@thelayerup.in>`;
@@ -49,32 +50,51 @@ export async function sendOrderConfirmation(order: Order & { items: OrderItem[] 
         `<tr><td style="padding:6px 0">${escape(i.productName)} × ${i.quantity}</td><td style="text-align:right">${formatPrice(i.priceAtPurchase * i.quantity)}</td></tr>`
     )
     .join("");
+  const c = emailCopy(order.locale);
   const body = `
-    <p>Thanks for your order! We're getting your prints ready.</p>
-    <p><strong>Order ${order.orderNumber}</strong></p>
+    <p>${c.orderThanks}</p>
+    ${order.paymentMethod === "COD" ? `<p>${c.orderCod(order.total)}</p>` : ""}
+    <p><strong>${c.order} ${order.orderNumber}</strong></p>
     <table style="width:100%;font-size:14px;border-collapse:collapse">${rows}
-      <tr><td style="padding-top:12px;border-top:1px solid #dcccc0">Shipping</td><td style="text-align:right;padding-top:12px;border-top:1px solid #dcccc0">${order.shippingCost ? formatPrice(order.shippingCost) : "Free"}</td></tr>
-      ${order.discount ? `<tr><td>Discount</td><td style="text-align:right">−${formatPrice(order.discount)}</td></tr>` : ""}
-      <tr><td style="font-weight:700;padding-top:6px">Total</td><td style="text-align:right;font-weight:700">${formatPrice(order.total)}</td></tr>
+      <tr><td style="padding-top:12px;border-top:1px solid #dcccc0">${c.shipping}</td><td style="text-align:right;padding-top:12px;border-top:1px solid #dcccc0">${order.shippingCost ? formatPrice(order.shippingCost) : c.free}</td></tr>
+      ${order.discount ? `<tr><td>${c.discount}</td><td style="text-align:right">−${formatPrice(order.discount)}</td></tr>` : ""}
+      ${order.codFee ? `<tr><td>${c.codFee}</td><td style="text-align:right">${formatPrice(order.codFee)}</td></tr>` : ""}
+      <tr><td style="font-weight:700;padding-top:6px">${c.total}</td><td style="text-align:right;font-weight:700">${formatPrice(order.total)}</td></tr>
     </table>
-    <p style="margin-top:20px"><a href="${site.url}/track?order=${order.orderNumber}" style="background:#fe5a35;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Track your order</a></p>`;
-  await send(order.email, `Order confirmed — ${order.orderNumber}`, layout("Order confirmed 🎉", body));
+    <p style="margin-top:20px"><a href="${site.url}/track?order=${order.orderNumber}" style="background:#fe5a35;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">${c.trackYour}</a></p>`;
+  await send(order.email, c.orderSubject(order.orderNumber), layout(c.orderTitle, body));
 }
 
 export async function sendStatusUpdate(order: Order, headline: string, detail: string) {
   const body = `<p>${escape(detail)}</p>
-    <p style="margin-top:20px"><a href="${site.url}/track?order=${order.orderNumber}" style="background:#fe5a35;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Track order ${order.orderNumber}</a></p>`;
+    <p style="margin-top:20px"><a href="${site.url}/track?order=${order.orderNumber}" style="background:#fe5a35;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">${emailCopy(order.locale).trackOrder(order.orderNumber)}</a></p>`;
   await send(order.email, `${headline} — ${order.orderNumber}`, layout(headline, body));
 }
 
-export async function sendPasswordReset(to: string, link: string) {
+export async function sendPasswordReset(to: string, link: string, locale?: string) {
+  const c = emailCopy(locale);
   if (!resend && process.env.NODE_ENV !== "production") {
     console.info(`[email:dev] password reset link for ${to}: ${link}`);
   }
-  const body = `<p>We received a request to reset your password. This link works for 1 hour.</p>
-    <p style="margin-top:20px"><a href="${escape(link)}" style="background:#fe5a35;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Choose a new password</a></p>
-    <p style="font-size:13px;color:#78604f;margin-top:20px">Didn't ask for this? You can ignore this email — your password won't change.</p>`;
-  await send(to, `Reset your ${site.name} password`, layout("Reset your password", body));
+  const body = `<p>${c.resetBody}</p>
+    <p style="margin-top:20px"><a href="${escape(link)}" style="background:#fe5a35;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">${c.resetCta}</a></p>
+    <p style="font-size:13px;color:#78604f;margin-top:20px">${c.resetIgnore}</p>`;
+  await send(to, c.resetSubject, layout(c.resetTitle, body));
+}
+
+/** Short note to a customer (referral rewards, return updates). */
+export async function sendCustomerNote(
+  to: string,
+  headline: string,
+  text: string,
+  cta?: { label: string; path: string }
+) {
+  const body = `<p style="white-space:pre-wrap">${escape(text)}</p>${
+    cta
+      ? `<p style="margin-top:20px"><a href="${site.url}${cta.path}" style="background:#fe5a35;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">${escape(cta.label)}</a></p>`
+      : ""
+  }`;
+  await send(to, headline, layout(headline, body));
 }
 
 /** Heads-up to the shop owner (STORE_NOTIFY_EMAIL). Never throws. */

@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Caveat, Inter, Space_Grotesk } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { site } from "@/config/site";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display" });
+// Handwritten accent for the hero's sticky notes.
+const hand = Caveat({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-caveat" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -30,26 +32,33 @@ export const metadata: Metadata = {
     description: site.description,
     images: ["/images/logo.png"],
   },
-  icons: { icon: "/images/logo.png" },
+  icons: { icon: "/images/logo.png", apple: "/images/logo.png" },
+  appleWebApp: { capable: true, title: site.name, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
+  // Lets fixed UI (the contact button) respect the iPhone home-indicator inset.
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f5ece5" },
     { media: "(prefers-color-scheme: dark)", color: "#14100d" },
   ],
 };
 
-// Applies the saved/system theme before first paint to avoid a flash.
-const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()`;
+// Applies the saved/system theme (and a dismissed announcement bar) before first paint to avoid a flash.
+const themeScript = `(function(){try{var d=document.documentElement,t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))d.classList.add("dark");if(localStorage.getItem("announce-dismissed"))d.dataset.announce="off"}catch(e){}})()`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-IN" suppressHydrationWarning>
+    <html lang="en-IN" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${inter.variable} ${display.variable} font-sans antialiased`}>
+      {/* suppressHydrationWarning: browser extensions add their own classes to <body> before React hydrates. */}
+      <body
+        className={`${inter.variable} ${display.variable} ${hand.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
         {children}
         <Toaster
           position="bottom-center"

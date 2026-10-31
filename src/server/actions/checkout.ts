@@ -3,11 +3,12 @@
 import { z } from "zod";
 import { prisma } from "@/server/db";
 import { getSession } from "@/server/session";
-import { createPendingOrder, markOrderPaid, priceCart, type PricedCart } from "@/server/services/orders";
+import { createPendingOrder, markOrderPaid, placeCodOrder, priceCart, type PricedCart } from "@/server/services/orders";
 import { getRazorpay, razorpayEnabled, testPaymentsEnabled, verifyPaymentSignature } from "@/server/payments/razorpay";
 import { cartLineSchema, checkoutSchema, type CheckoutInput } from "@/lib/validators";
 import { site } from "@/config/site";
-import { toPaise } from "@/lib/pricing";
+import { formatPrice } from "@/lib/utils";
+import { codFeeFor, toPaise } from "@/lib/pricing";
 import { RATE_LIMITED, rateLimit } from "@/server/security/rate-limit";
 
 export async function quoteCart(
@@ -27,7 +28,7 @@ export type StartCheckoutResult =
       orderId: string;
       orderNumber: string;
       amount: number;
-      mode: "razorpay" | "test";
+      mode: "razorpay" | "test" | "cod";
       razorpayOrderId?: string;
       razorpayKey?: string;
       prefill: { name: string; email: string; contact: string };
@@ -42,10 +43,6 @@ export async function startCheckout(input: CheckoutInput): Promise<StartCheckout
   if (!(await rateLimit("checkout", session.user.id))) {
     return { ok: false, error: RATE_LIMITED };
   }
-  if (!razorpayEnabled && !testPaymentsEnabled) {
-    return { ok: false, error: "Payments are temporarily unavailable. Please try again shortly." };
-  }
-
   const parsed = checkoutSchema.safeParse(input);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
@@ -53,6 +50,10 @@ export async function startCheckout(input: CheckoutInput): Promise<StartCheckout
     return { ok: false, error: "Please fix the highlighted fields.", errors };
   }
   const data = parsed.data;
+  const cod = data.paymentMethod === "COD";
+  if (!cod && !razorpayEnabled && !testPaymentsEnabled) {
+    return { ok: false, error: "Online payments are temporarily unavailable. Please try again shortly." };
+  }
 
   const priced = await priceCart(data.items, data.couponCode);
   if (priced.lines.length === 0) {
@@ -67,6 +68,16 @@ export async function startCheckout(input: CheckoutInput): Promise<StartCheckout
     return { ok: false, error: priced.problems[0] ?? "Your cart was updated. Please review it.", priced };
   }
 
+  // Re-checked on the server: the fee and cap come from config, never the browser.
+  const codFee = cod ? codFeeFor(priced.total, site.cod) : 0;
+  if (codFee === null) {
+    return {
+      ok: false,
+      error: `Cash on delivery is available on orders up to ${formatPrice(site.cod.maxOrder)}. Please pay online.`,
+      priced,
+    };
+  }
+
   const userId = session.user.id;
   if (data.saveAddress) {
     const count = await prisma.address.count({ where: { userId } });
@@ -75,7 +86,8 @@ export async function startCheckout(input: CheckoutInput): Promise<StartCheckout
     });
   }
 
-  const order = await createPendingOrder(userId, session.user.email, data, priced);
+  await prisma.user.update({ where: { id: userId }, data: { locale: data.locale } });
+  const order = await createPendingOrder(userId, session.user.email, data, priced, codFee);
 
   const prefill = {
     name: data.address.fullName,
@@ -83,6 +95,11 @@ export async function startCheckout(input: CheckoutInput): Promise<StartCheckout
     // Razorpay only prefills the contact field when it includes the country code.
     contact: `+91${data.address.phone}`,
   };
+
+  if (cod) {
+    await placeCodOrder(order.id);
+    return { ok: true, orderId: order.id, orderNumber: order.orderNumber, amount: order.total, mode: "cod", prefill };
+  }
 
   if (!razorpayEnabled) {
     return { ok: true, orderId: order.id, orderNumber: order.orderNumber, amount: order.total, mode: "test", prefill };
@@ -157,5 +174,6 @@ export async function getCheckoutConfig() {
   return {
     mode: razorpayEnabled ? "razorpay" : testPaymentsEnabled ? "test" : "disabled",
     freeShippingAbove: site.shipping.freeAbove,
+    cod: site.cod,
   } as const;
 }

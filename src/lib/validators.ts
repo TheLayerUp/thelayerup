@@ -30,6 +30,8 @@ export const checkoutSchema = z.object({
   couponCode: z.string().trim().toUpperCase().optional(),
   notes: z.string().trim().max(500).optional(),
   saveAddress: z.boolean().optional(),
+  paymentMethod: z.enum(["ONLINE", "COD"]).default("ONLINE"),
+  locale: z.enum(["en", "hi"]).default("en"),
 });
 
 export const registerSchema = z.object({
@@ -55,6 +57,8 @@ export const productSchema = z.object({
     .optional()
     .or(z.literal("")),
   description: z.string().trim().min(10, "Description must be at least 10 characters"),
+  nameHi: z.string().trim().max(160).optional(),
+  descriptionHi: z.string().trim().max(5000).optional(),
   features: z.string().optional(),
   price: z.coerce.number().int("Whole rupees only").positive("Price must be positive"),
   compareAtPrice: z.coerce
@@ -75,6 +79,12 @@ export const productSchema = z.object({
     .or(z.literal("").transform(() => undefined)),
   categoryId: z.string().min(1, "Category is required"),
   imageUrls: z.string().optional(),
+  modelUrl: z
+    .string()
+    .trim()
+    .regex(/\.(glb|gltf)(\?.*)?$/i, "Use a .glb or .gltf file")
+    .optional()
+    .or(z.literal("")),
   isActive: z.boolean(),
   isFeatured: z.boolean(),
 });
@@ -109,6 +119,8 @@ export const customOrderSchema = z.object({
   budget: z.string().optional(),
   deadline: z.string().optional(),
   fileUrl: z.url("Enter a valid link").optional().or(z.literal("")),
+  kind: z.enum(["CUSTOM", "BULK"]).default("CUSTOM"),
+  company: z.string().trim().max(120).optional(),
 });
 
 export const trackSchema = z.object({

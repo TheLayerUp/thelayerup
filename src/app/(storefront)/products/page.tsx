@@ -5,6 +5,7 @@ import Link from "next/link";
 import ProductGrid, { ProductGridSkeleton } from "@/components/catalog/ProductGrid";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
 import { buttonVariants } from "@/components/ui/button";
+import { T } from "@/i18n/LanguageProvider";
 import { getCatalog, getCategories, getMaterials, type CatalogSort } from "@/server/queries/catalog";
 
 export const metadata: Metadata = {
@@ -23,11 +24,18 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-bold sm:text-5xl">Shop</h1>
-      <p className="mt-2 text-muted-foreground">Every piece is printed to order and finished by hand.</p>
+      <h1 className="text-4xl font-bold sm:text-5xl">
+        <T k="nav.shop" />
+      </h1>
+      <p className="mt-2 text-muted-foreground">
+        <T k="shop.intro" />
+      </p>
 
       <Suspense fallback={<div className="my-8 h-24 animate-pulse rounded-2xl bg-surface-2" />}>
-        <CatalogFilters categories={categories.map((c) => ({ slug: c.slug, name: c.name }))} materials={materials} />
+        <CatalogFilters
+          categories={categories.map((c) => ({ slug: c.slug, name: c.name, nameHi: c.nameHi }))}
+          materials={materials}
+        />
       </Suspense>
 
       <Suspense fallback={<ProductGridSkeleton />}>
@@ -52,16 +60,18 @@ async function Results({ searchParams }: Pick<PageProps<"/products">, "searchPar
     return (
       <div className="flex flex-col items-center rounded-3xl border border-dashed border-border py-20 text-center">
         <PackageSearch className="h-12 w-12 text-muted-foreground" />
-        <p className="mt-4 text-lg font-medium">No products match those filters</p>
+        <p className="mt-4 text-lg font-medium">
+          <T k="shop.noMatch" />
+        </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Try a different search — or ask us to print exactly what you want.
+          <T k="shop.noMatchSub" />
         </p>
         <div className="mt-6 flex gap-3">
           <Link href="/products" className={buttonVariants({ variant: "outline" })}>
-            Clear filters
+            <T k="shop.clear" />
           </Link>
           <Link href="/custom-order" className={buttonVariants()}>
-            Custom print
+            <T k="nav.custom" />
           </Link>
         </div>
       </div>
@@ -71,7 +81,7 @@ async function Results({ searchParams }: Pick<PageProps<"/products">, "searchPar
   return (
     <>
       <p className="mb-6 text-sm text-muted-foreground">
-        {products.length} {products.length === 1 ? "product" : "products"}
+        {products.length} <T k={products.length === 1 ? "shop.product" : "shop.products"} />
       </p>
       <ProductGrid products={products} />
     </>

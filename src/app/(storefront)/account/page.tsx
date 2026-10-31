@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LogOut, MapPin, Package, Trash2 } from "lucide-react";
+import { ChevronRight, Heart, LogOut, MapPin, Package, Trash2 } from "lucide-react";
 import { prisma } from "@/server/db";
 import { requireUser } from "@/server/session";
 import { signOutAction, deleteAddress, makeDefaultAddress } from "@/server/actions/account";
@@ -10,6 +10,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatPrice } from "@/lib/utils";
+import ReferralCard from "@/components/account/ReferralCard";
+import PushToggle from "@/components/account/PushToggle";
+import { ensureReferralCode } from "@/server/services/referrals";
+import { site } from "@/config/site";
 
 export const metadata: Metadata = { title: "My account", robots: { index: false } };
 
@@ -25,7 +29,7 @@ export default function AccountPage() {
 
 async function Account() {
   const user = await requireUser("/account");
-  const [orders, addresses] = await Promise.all([
+  const [orders, addresses, referralCode, referred] = await Promise.all([
     prisma.order.findMany({
       where: { userId: user.id, status: { not: "PENDING" } },
       orderBy: { createdAt: "desc" },
@@ -33,6 +37,8 @@ async function Account() {
       take: 50,
     }),
     prisma.address.findMany({ where: { userId: user.id }, orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }] }),
+    ensureReferralCode(user.id),
+    prisma.user.count({ where: { referredById: user.id } }),
   ]);
 
   return (
@@ -48,6 +54,28 @@ async function Account() {
           </Button>
         </form>
       </div>
+
+      <Link
+        href="/account/wishlist"
+        className="mt-8 flex items-center justify-between rounded-3xl border border-border bg-surface p-5 hover:border-primary"
+      >
+        <span className="flex items-center gap-3 font-semibold">
+          <Heart className="h-5 w-5 text-primary" /> Wishlist
+        </span>
+        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+      </Link>
+
+      <div className="mt-4">
+        <PushToggle />
+      </div>
+
+      <ReferralCard
+        code={referralCode}
+        link={`${site.url}/register?ref=${referralCode}`}
+        friendPercent={site.referral.friendPercent}
+        reward={formatPrice(site.referral.referrerFlat)}
+        joined={referred}
+      />
 
       <section id="orders" className="mt-10">
         <h2 className="flex items-center gap-2 text-xl font-semibold">

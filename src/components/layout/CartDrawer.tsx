@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocalized, useT } from "@/i18n/LanguageProvider";
 import { useEffect } from "react";
 import { X, Minus, Plus, ShoppingBag, Trash2, Truck } from "lucide-react";
 import Image from "next/image";
@@ -11,6 +12,8 @@ import { formatPrice } from "@/lib/utils";
 import { site } from "@/config/site";
 
 export default function CartDrawer() {
+  const t = useT();
+  const loc = useLocalized();
   const { items, isOpen, closeCart, removeItem, updateQuantity } = useCartStore();
   const hydrated = useHydrated();
   const pathname = usePathname();
@@ -44,7 +47,7 @@ export default function CartDrawer() {
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Your cart</h2>
+            <h2 className="text-lg font-semibold">{t("cart.title")}</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={closeCart} aria-label="Close cart">
             <X className="h-5 w-5" />
@@ -60,7 +63,7 @@ export default function CartDrawer() {
                   Add <strong className="text-foreground">{formatPrice(toFree)}</strong> more for free shipping
                 </span>
               ) : (
-                <span className="font-medium text-success">You&apos;ve unlocked free shipping!</span>
+                <span className="font-medium text-success">{t("cart.freeUnlocked")}</span>
               )}
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
@@ -76,8 +79,8 @@ export default function CartDrawer() {
           {items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <ShoppingBag className="mb-4 h-14 w-14 text-border" />
-              <p className="text-lg font-medium">Your cart is empty</p>
-              <p className="mt-1 text-sm text-muted-foreground">Add something you&apos;ll love having on your desk.</p>
+              <p className="text-lg font-medium">{t("cart.empty")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("cart.emptySub")}</p>
               <Link href="/products" onClick={closeCart} className={buttonVariants({ className: "mt-6" })}>
                 Browse products
               </Link>
@@ -95,7 +98,7 @@ export default function CartDrawer() {
                   </Link>
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
-                      <h3 className="line-clamp-1 text-sm font-medium">{item.name}</h3>
+                      <h3 className="line-clamp-1 text-sm font-medium">{loc(item.name, item.nameHi)}</h3>
                       <p className="mt-0.5 text-sm font-semibold">{formatPrice(item.price)}</p>
                     </div>
                     <div className="flex items-center justify-between">
@@ -135,23 +138,23 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <div className="space-y-4 border-t border-border px-6 py-4">
             <div className="flex justify-between text-base font-semibold">
-              <span>Subtotal</span>
+              <span>{t("cart.subtotal")}</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
-            <p className="text-xs text-muted-foreground">Shipping and discounts are calculated at checkout.</p>
+            <p className="text-xs text-muted-foreground">{t("cart.note")}</p>
             <Link
               href="/checkout"
               onClick={closeCart}
               className={buttonVariants({ variant: "glow", size: "lg", className: "w-full" })}
             >
-              Checkout
+              {t("cart.checkout")}
             </Link>
             <Link
               href="/cart"
               onClick={closeCart}
               className="block text-center text-sm text-muted-foreground hover:text-foreground"
             >
-              View full cart
+              {t("cart.viewFull")}
             </Link>
           </div>
         )}

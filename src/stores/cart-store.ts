@@ -6,6 +6,7 @@ export interface CartItem {
   id: string; // product id
   slug: string;
   name: string;
+  nameHi?: string | null;
   price: number; // display only — the server re-prices at checkout
   image: string;
   quantity: number;

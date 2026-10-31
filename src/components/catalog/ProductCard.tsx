@@ -8,15 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
 import { formatPrice } from "@/lib/utils";
 import type { ProductCardData } from "@/server/queries/catalog";
+import { useLocalized, useT } from "@/i18n/LanguageProvider";
 
-export default function ProductCard({ product }: { product: ProductCardData }) {
+export default function ProductCard({ product, priority }: { product: ProductCardData; priority?: boolean }) {
   const addItem = useCartStore((s) => s.addItem);
-  const { id, name, slug, price, compareAtPrice, image, category, material, isNew, stock } = product;
+  const t = useT();
+  const loc = useLocalized();
+  const { id, slug, price, compareAtPrice, image, material, isNew, stock, nameHi } = product;
+  const name = loc(product.name, nameHi);
+  const category = loc(product.category, product.categoryHi);
   const soldOut = stock <= 0;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem({ id, slug, name, price, image, maxStock: stock });
+    addItem({ id, slug, name: product.name, nameHi, price, image, maxStock: stock });
     toast.success(`${name} added to cart`);
   };
 
@@ -29,13 +34,14 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
           src={image}
           alt={name}
           fill
+          priority={priority}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
         <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5">
-          {isNew && <Badge className="bg-foreground text-background">New</Badge>}
+          {isNew && <Badge className="bg-foreground text-background">{t("card.new")}</Badge>}
           {discount > 0 && <Badge>-{discount}%</Badge>}
-          {soldOut && <Badge variant="secondary">Sold out</Badge>}
+          {soldOut && <Badge variant="secondary">{t("card.soldOut")}</Badge>}
         </div>
         {!soldOut && (
           <button

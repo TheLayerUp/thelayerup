@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GoogleButton, RegisterForm } from "@/components/auth/AuthForms";
 import { googleEnabled } from "@/server/auth";
+import { site } from "@/config/site";
 
 export const metadata: Metadata = { title: "Create account" };
 
@@ -19,10 +20,16 @@ export default function RegisterPage({ searchParams }: PageProps<"/register">) {
 }
 
 async function Forms({ searchParams }: Pick<PageProps<"/register">, "searchParams">) {
-  const { callbackUrl } = await searchParams;
+  const { callbackUrl, ref } = await searchParams;
   const cb = typeof callbackUrl === "string" ? callbackUrl : "/account";
+  const referral = typeof ref === "string" ? ref.slice(0, 20) : undefined;
   return (
     <>
+      {referral && (
+        <p className="mt-4 rounded-2xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary-strong">
+          🎁 A friend invited you. Sign up with email to get {site.referral.friendPercent}% off your first order.
+        </p>
+      )}
       <div className="mt-6 space-y-4">
         {googleEnabled && (
           <>
@@ -32,7 +39,7 @@ async function Forms({ searchParams }: Pick<PageProps<"/register">, "searchParam
             </div>
           </>
         )}
-        <RegisterForm callbackUrl={cb} />
+        <RegisterForm callbackUrl={cb} referral={referral} />
       </div>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}

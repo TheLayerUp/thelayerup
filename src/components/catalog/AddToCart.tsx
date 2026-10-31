@@ -6,18 +6,20 @@ import { Minus, Plus, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { useCartStore, type CartItem } from "@/stores/cart-store";
+import { useT } from "@/i18n/LanguageProvider";
 
 export default function AddToCart({ product }: { product: Omit<CartItem, "quantity"> }) {
   const [qty, setQty] = useState(1);
   const { addItem, openCart } = useCartStore();
   const router = useRouter();
+  const t = useT();
   const soldOut = product.maxStock <= 0;
   const max = Math.min(product.maxStock, 20);
 
   if (soldOut) {
     return (
       <Button size="xl" variant="secondary" disabled className="w-full">
-        Sold out — restocking soon
+        {t("pdp.soldOut")}
       </Button>
     );
   }
@@ -48,26 +50,26 @@ export default function AddToCart({ product }: { product: Omit<CartItem, "quanti
       <Button
         size="xl"
         variant="outline"
-        className="flex-1"
+        className="w-full sm:flex-1"
         onClick={() => {
           addItem(product, qty);
-          toast.success("Added to cart");
+          toast.success(t("pdp.added"));
           openCart();
         }}
       >
         <ShoppingBag className="h-5 w-5" />
-        Add to cart
+        {t("pdp.addToCart")}
       </Button>
       <Button
         size="xl"
         variant="glow"
-        className="flex-1"
+        className="w-full sm:flex-1"
         onClick={() => {
           addItem(product, qty);
           router.push("/checkout");
         }}
       >
-        Buy now
+        {t("pdp.buyNow")}
       </Button>
     </div>
   );

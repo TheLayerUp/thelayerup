@@ -51,13 +51,25 @@ model User {
   phone         String?
   passwordHash  String?
   role          Role      @default(CUSTOMER)
+  // "en" or "hi": language for customer emails (set at sign-up, updated at checkout)
+  locale        String    @default("en")
 
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  reviews       Review[]
-  addresses     Address[]
-  wishlistItems WishlistItem[]
+  // Referrals: every customer gets a shareable code; a friend who signs up with it
+  // is linked here, and the referrer is rewarded once (on the friend's first paid order).
+  referralCode       String?   @unique
+  referredById       String?
+  referredBy         User?     @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals          User[]    @relation("Referrals")
+  referralRewardedAt DateTime?
+
+  accounts          Account[]
+  sessions          Session[]
+  orders            Order[]
+  reviews           Review[]
+  addresses         Address[]
+  wishlistItems     WishlistItem[]
+  returns           ReturnRequest[]
+  pushSubscriptions PushSubscription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,6 +114,7 @@ model VerificationToken {
 model Category {
   id           String    @id @default(cuid())
   name         String    @unique
+  nameHi       String?
   slug         String    @unique
   description  String?
   image        String?
@@ -116,6 +129,9 @@ model Category {
 model Product {
   id             String   @id @default(cuid())
   name           String
+  // Optional Hindi copy, shown when the store is switched to हिं
+  nameHi         String?
+  descriptionHi  String?
   slug           String   @unique
   description    String
   features       String[]
@@ -129,6 +145,8 @@ model Product {
   weightGrams    Int?
   isActive       Boolean  @default(true)
   isFeatured     Boolean  @default(false)
+  // Optional .glb/.gltf for the interactive 3D viewer on the product page.
+  modelUrl       String?
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -181,6 +199,8 @@ model Order {
   id           String      @id @default(cuid())
   // Human-friendly reference shown to customers, e.g. TLU-7K3QX9
   orderNumber  String      @unique
+  // Language of the customer's emails for this order
+  locale       String      @default("en")
   status       OrderStatus @default(PENDING)
   email        String
   subtotal     Int
@@ -199,6 +219,9 @@ model Order {
   shipPincode String
 
   paymentMethod     String    @default("RAZORPAY")
+  // Cash on delivery: the fee charged, and when the store confirmed the order by phone/WhatsApp.
+  codFee            Int       @default(0)
+  codConfirmedAt    DateTime?
   razorpayOrderId   String?   @unique
   razorpayPaymentId String?   @unique
   paidAt            DateTime?
@@ -212,6 +235,7 @@ model Order {
 
   items    OrderItem[]
   shipping Shipping?
+  returns  ReturnRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -320,6 +344,9 @@ model ContactMessage {
 
 model CustomOrder {
   id          String            @id @default(cuid())
+  // CUSTOM (one-off print) or BULK (corporate / event orders)
+  kind        String            @default("CUSTOM")
+  company     String?
   name        String
   email       String
   phone       String
@@ -352,4 +379,47 @@ model RateLimit {
   resetAt DateTime
 
   @@index([resetAt])
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RECEIVED
+  REFUNDED
+}
+
+model ReturnRequest {
+  id         String       @id @default(cuid())
+  reason     String
+  details    String?
+  photoUrl   String?
+  status     ReturnStatus @default(REQUESTED)
+  adminNotes String?
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([orderId])
+}
+
+// Web push (browser notifications) for order updates.
+model PushSubscription {
+  id       String @id @default(cuid())
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

@@ -148,10 +148,21 @@ export default function OrderView({ order, showAddress = true }: { order: FullOr
               <dt className="text-muted-foreground">Shipping</dt>
               <dd>{order.shippingCost ? formatPrice(order.shippingCost) : "Free"}</dd>
             </div>
+            {order.codFee > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Cash on delivery fee</dt>
+                <dd>{formatPrice(order.codFee)}</dd>
+              </div>
+            )}
             <div className="flex justify-between pt-1 text-base font-bold">
               <dt>Total</dt>
               <dd>{formatPrice(order.total)}</dd>
             </div>
+            {order.paymentMethod === "COD" && !order.paidAt && (
+              <p className="rounded-xl bg-warning/10 px-3 py-2 text-xs font-medium text-warning">
+                Pay {formatPrice(order.total)} in cash when your order arrives.
+              </p>
+            )}
           </dl>
         </div>
 

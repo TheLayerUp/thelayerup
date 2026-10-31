@@ -56,3 +56,6 @@ next-env.d.ts
 
 # Vercel CLI project link
 /.vercel
+
+# Original (full-size) reel footage; compressed copies live in public/media/reels
+/media-src/

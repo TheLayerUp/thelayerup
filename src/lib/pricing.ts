@@ -30,6 +30,12 @@ export function couponDiscount(c: Pick<CouponRule, "type" | "value" | "maxDiscou
 }
 
 /** Amount in paise for Razorpay. Throws on anything that isn't whole rupees. */
+/** COD fee for an order total, or null when COD isn't offered for it. */
+export function codFeeFor(total: number, cod: { enabled: boolean; fee: number; maxOrder: number }): number | null {
+  if (!cod.enabled || total <= 0 || total > cod.maxOrder) return null;
+  return cod.fee;
+}
+
 export function toPaise(rupees: number): number {
   if (!Number.isInteger(rupees) || rupees < 0) throw new Error(`Invalid rupee amount: ${rupees}`);
   return rupees * 100;

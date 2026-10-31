@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Quote, Star } from "lucide-react";
 import { getHighlightReviews } from "@/server/queries/catalog";
+import { cn } from "@/lib/utils";
+import SectionHeading from "./SectionHeading";
 
 // Only real, published customer reviews are shown; the section hides itself until there are some.
 export default async function TestimonialsSection() {
@@ -8,38 +10,73 @@ export default async function TestimonialsSection() {
   if (reviews.length === 0) return null;
 
   return (
-    <section className="py-16 sm:py-20">
+    <section className="border-y border-border bg-surface py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 max-w-2xl">
-          <p className="text-sm font-semibold tracking-wider text-primary-strong uppercase">Reviews</p>
-          <h2 className="mt-2 text-3xl font-bold sm:text-4xl">What customers are saying</h2>
-        </div>
+        <SectionHeading index="05" eyebrow="Reviews" title="What customers are saying" />
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {reviews.map((r) => {
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          {reviews.map((r, i) => {
             const name = r.user.name?.split(" ")[0] ?? "Customer";
+            const highlight = i === 0;
             return (
-              <figure key={r.id} className="rounded-3xl border border-border bg-surface p-6">
+              <figure
+                key={r.id}
+                className={cn(
+                  "reveal relative flex flex-col overflow-hidden rounded-[2rem] border p-7",
+                  highlight ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background/60"
+                )}
+              >
+                <Quote
+                  className={cn(
+                    "absolute -top-2 -right-2 h-28 w-28 rotate-180",
+                    highlight ? "text-primary-foreground/15" : "text-primary/10"
+                  )}
+                  aria-hidden
+                />
                 <div className="flex gap-0.5" aria-label={`${r.rating} out of 5 stars`}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-primary text-primary" : "text-border"}`} />
+                  {Array.from({ length: 5 }).map((_, s) => (
+                    <Star
+                      key={s}
+                      className={cn(
+                        "h-4 w-4",
+                        s < r.rating
+                          ? highlight
+                            ? "fill-primary-foreground text-primary-foreground"
+                            : "fill-primary text-primary"
+                          : "opacity-30"
+                      )}
+                    />
                   ))}
                 </div>
-                <blockquote className="mt-4 leading-relaxed">&ldquo;{r.comment}&rdquo;</blockquote>
-                <figcaption className="mt-5 flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary-strong">
+                <blockquote className="relative mt-6 flex-1 font-display text-xl leading-snug font-medium tracking-tight">
+                  &ldquo;{r.comment}&rdquo;
+                </blockquote>
+                <figcaption
+                  className={cn(
+                    "mt-8 flex items-center gap-3 border-t pt-5",
+                    highlight ? "border-primary-foreground/25" : "border-border"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold",
+                      highlight ? "bg-primary-foreground text-primary-strong" : "bg-foreground text-background"
+                    )}
+                  >
                     {name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-semibold">
                       {name}
                       {r.isVerifiedPurchase && (
-                        <span className="ml-1.5 text-xs font-normal text-success">✓ Verified</span>
+                        <span className={cn("ml-1.5 text-xs font-medium", highlight ? "opacity-85" : "text-success")}>
+                          ✓ Verified buyer
+                        </span>
                       )}
                     </p>
                     <Link
                       href={`/products/${r.product.slug}`}
-                      className="text-xs text-muted-foreground hover:text-foreground"
+                      className={cn("text-xs hover:underline", highlight ? "opacity-80" : "text-muted-foreground")}
                     >
                       {r.product.name}
                     </Link>

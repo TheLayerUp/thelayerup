@@ -14,6 +14,8 @@ export type ProductFormValues = {
   name: string;
   slug: string;
   description: string;
+  nameHi: string;
+  descriptionHi: string;
   features: string;
   price: number | "";
   compareAtPrice: number | "";
@@ -24,6 +26,7 @@ export type ProductFormValues = {
   weightGrams: number | "";
   categoryId: string;
   imageUrls: string;
+  modelUrl: string;
   isActive: boolean;
   isFeatured: boolean;
 };
@@ -72,6 +75,26 @@ export default function ProductForm({
             className="min-h-28"
             error={e.description}
           />
+        </div>
+        <div className="grid gap-4 rounded-2xl border border-dashed border-border p-4 sm:col-span-2">
+          <p className="text-xs text-muted-foreground">
+            Optional Hindi copy, shown when shoppers switch the store to हिं. Leave blank to show the English text.
+          </p>
+          <div>
+            <Label htmlFor="nameHi">Name (Hindi)</Label>
+            <Input id="nameHi" name="nameHi" lang="hi" defaultValue={initial.nameHi} error={e.nameHi} />
+          </div>
+          <div>
+            <Label htmlFor="descriptionHi">Description (Hindi)</Label>
+            <Textarea
+              id="descriptionHi"
+              name="descriptionHi"
+              lang="hi"
+              defaultValue={initial.descriptionHi}
+              className="min-h-24"
+              error={e.descriptionHi}
+            />
+          </div>
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="features">Highlights (one per line)</Label>
@@ -156,6 +179,21 @@ export default function ProductForm({
         <p className="mt-2 text-xs text-muted-foreground">
           Paste Cloudinary or other hosted image links, or paths under /public. Direct uploads are on the roadmap.
         </p>
+        <div className="mt-5">
+          <Label htmlFor="modelUrl">3D model (optional)</Label>
+          <Input
+            id="modelUrl"
+            name="modelUrl"
+            defaultValue={initial.modelUrl}
+            placeholder="/models/moon-lamp.glb"
+            className="font-mono text-xs"
+            error={e.modelUrl}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            A .glb adds an interactive “View in 3D” on the product page. Export from your slicer/CAD as glTF binary;
+            keep it under ~3 MB.
+          </p>
+        </div>
         <div className="mt-5 flex flex-wrap gap-6 text-sm">
           <label className="flex items-center gap-2">
             <input type="checkbox" name="isActive" defaultChecked={initial.isActive} className="accent-primary" /> Live

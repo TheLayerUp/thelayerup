@@ -55,7 +55,8 @@ export function ContactForm() {
   );
 }
 
-export function CustomOrderForm() {
+/** `bulk` switches the copy and fields for corporate / event orders (stored as kind BULK). */
+export function CustomOrderForm({ bulk = false }: { bulk?: boolean }) {
   const [state, action, pending] = useActionState<FormState, FormData>(submitCustomOrder, {});
   if (state.ok) return <Success message={state.message} />;
   const e = state.errors ?? {};
@@ -63,6 +64,13 @@ export function CustomOrderForm() {
   return (
     <form action={action} className="space-y-5">
       <Honeypot />
+      {bulk && <input type="hidden" name="kind" value="BULK" />}
+      {bulk && (
+        <div>
+          <Label htmlFor="co-company">Company / organisation</Label>
+          <Input id="co-company" name="company" autoComplete="organization" error={e.company} />
+        </div>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <Label htmlFor="co-name">Name *</Label>
@@ -92,7 +100,11 @@ export function CustomOrderForm() {
           name="description"
           required
           className="min-h-36"
-          placeholder="Size, purpose, colours, text to engrave, how many… the more detail the better."
+          placeholder={
+            bulk
+              ? "What's the occasion, which product or design, logo/branding, packaging, delivery cities…"
+              : "Size, purpose, colours, text to engrave, how many… the more detail the better."
+          }
           error={e.description}
         />
       </div>
@@ -110,7 +122,7 @@ export function CustomOrderForm() {
         </div>
         <div>
           <Label htmlFor="co-qty">Quantity</Label>
-          <Input id="co-qty" name="quantity" type="number" min={1} defaultValue={1} error={e.quantity} />
+          <Input id="co-qty" name="quantity" type="number" min={1} defaultValue={bulk ? 25 : 1} error={e.quantity} />
         </div>
         <div>
           <Label htmlFor="co-budget">Budget (optional)</Label>
@@ -142,7 +154,7 @@ export function CustomOrderForm() {
         </p>
       </div>
       <Button type="submit" size="lg" variant="glow" isLoading={pending}>
-        Request a quote <ArrowRight className="h-4 w-4" />
+        {bulk ? "Get bulk pricing" : "Request a quote"} <ArrowRight className="h-4 w-4" />
       </Button>
     </form>
   );

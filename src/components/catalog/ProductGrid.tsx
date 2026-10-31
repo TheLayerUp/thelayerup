@@ -6,7 +6,7 @@ import type { ProductCardData } from "@/server/queries/catalog";
 interface ProductGridProps {
   products: ProductCardData[];
   eyebrow?: string;
-  title?: string;
+  title?: React.ReactNode;
   viewAllHref?: string;
 }
 
@@ -27,8 +27,9 @@ export default function ProductGrid({ products, eyebrow, title, viewAllHref }: P
         </div>
       )}
       <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 lg:grid-cols-4">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+        {products.map((product, i) => (
+          // The first row is above the fold on the catalogue page, so load it eagerly.
+          <ProductCard key={product.id} product={product} priority={i < 4} />
         ))}
       </div>
     </section>

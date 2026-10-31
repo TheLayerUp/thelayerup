@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, FlaskConical, Tag, X } from "lucide-react";
+import { AlertTriangle, Banknote, CreditCard, FlaskConical, Tag, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -15,6 +15,9 @@ import { confirmRazorpayPayment, confirmTestPayment, quoteCart, startCheckout } 
 import type { PricedCart } from "@/server/services/orders";
 import type { AddressInput } from "@/lib/validators";
 import { INDIAN_STATES } from "@/config/india";
+import { site } from "@/config/site";
+import { codFeeFor } from "@/lib/pricing";
+import { useLang, useLocalized, useT } from "@/i18n/LanguageProvider";
 import { cn, formatPrice } from "@/lib/utils";
 
 type SavedAddress = AddressInput & { id: string; line2: string };
@@ -67,6 +70,10 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
   const [address, setAddress] = useState<AddressInput>(emptyAddress(defaultName));
   const [saveAddress, setSaveAddress] = useState(addresses.length === 0);
   const [notes, setNotes] = useState("");
+  const t = useT();
+  const loc = useLocalized();
+  const { lang } = useLang();
+  const [payMethod, setPayMethod] = useState<"ONLINE" | "COD">(mode === "disabled" ? "COD" : "ONLINE");
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<string | undefined>();
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -138,6 +145,10 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
     setAddress((a) => ({ ...a, [k]: e.target.value }));
   const err = (k: string) => errors[`address.${k}`];
 
+  const codFee = priced ? codFeeFor(priced.total, site.cod) : null;
+  const useCod = payMethod === "COD" && codFee !== null;
+  const payable = (priced?.total ?? 0) + (useCod ? codFee : 0);
+
   async function finish(orderNumber: string) {
     setPlaced(true);
     clearCart();
@@ -155,6 +166,9 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
         couponCode: coupon,
         notes: notes || undefined,
         saveAddress: selectedAddress === "new" && saveAddress,
+        paymentMethod: useCod ? "COD" : "ONLINE",
+        // Order emails exist in English and Hindi; Tamil shoppers get English.
+        locale: lang === "hi" ? "hi" : "en",
       });
 
       if (!res.ok) {
@@ -167,6 +181,8 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
         setPaying(false);
         return;
       }
+
+      if (res.mode === "cod") return finish(res.orderNumber);
 
       if (res.mode === "test") {
         const done = await confirmTestPayment(res.orderId);
@@ -229,7 +245,7 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
         )}
 
         <section className="rounded-3xl border border-border bg-surface p-6">
-          <h2 className="text-lg font-semibold">Delivery address</h2>
+          <h2 className="text-lg font-semibold">{t("co.address")}</h2>
 
           {addresses.length > 0 && (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -281,7 +297,7 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
           {selectedAddress === "new" && (
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <div>
-                <Label htmlFor="fullName">Full name</Label>
+                <Label htmlFor="fullName">{t("co.fullName")}</Label>
                 <Input
                   id="fullName"
                   autoComplete="name"
@@ -291,7 +307,7 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Mobile number</Label>
+                <Label htmlFor="phone">{t("co.mobile")}</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -304,7 +320,7 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="line1">Flat, house no., building, street</Label>
+                <Label htmlFor="line1">{t("co.line1")}</Label>
                 <Input
                   id="line1"
                   autoComplete="address-line1"
@@ -314,11 +330,11 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="line2">Area, landmark (optional)</Label>
+                <Label htmlFor="line2">{t("co.line2")}</Label>
                 <Input id="line2" autoComplete="address-line2" value={address.line2} onChange={set("line2")} />
               </div>
               <div>
-                <Label htmlFor="pincode">Pincode</Label>
+                <Label htmlFor="pincode">{t("co.pincode")}</Label>
                 <Input
                   id="pincode"
                   autoComplete="postal-code"
@@ -330,7 +346,7 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
                 />
               </div>
               <div>
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">{t("co.city")}</Label>
                 <Input
                   id="city"
                   autoComplete="address-level2"
@@ -340,9 +356,9 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="state">State</Label>
+                <Label htmlFor="state">{t("co.state")}</Label>
                 <Select id="state" value={address.state} onChange={set("state")} error={err("state")}>
-                  <option value="">Select state</option>
+                  <option value="">{t("co.selectState")}</option>
                   {INDIAN_STATES.map((s) => (
                     <option key={s} value={s}>
                       {s}
@@ -357,29 +373,77 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
                   onChange={(e) => setSaveAddress(e.target.checked)}
                   className="accent-primary"
                 />
-                Save this address for next time
+                {t("co.saveAddress")}
               </label>
             </div>
           )}
         </section>
 
         <section className="rounded-3xl border border-border bg-surface p-6">
+          <h2 className="text-lg font-semibold">{t("co.payment")}</h2>
+          <div role="radiogroup" aria-label="Payment method" className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  id: "ONLINE",
+                  icon: CreditCard,
+                  title: t("co.payOnline"),
+                  sub: t("co.payOnlineSub"),
+                  disabled: mode === "disabled",
+                },
+                {
+                  id: "COD",
+                  icon: Banknote,
+                  title: t("co.cod"),
+                  sub:
+                    codFee === null
+                      ? t("co.codMax").replace("{amount}", formatPrice(site.cod.maxOrder))
+                      : t("co.codSub").replace("{amount}", formatPrice(codFee)),
+                  disabled: codFee === null,
+                },
+              ] as const
+            ).map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                role="radio"
+                aria-checked={payMethod === m.id && !m.disabled}
+                disabled={m.disabled}
+                onClick={() => setPayMethod(m.id)}
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-2xl border p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                  payMethod === m.id && !m.disabled
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-foreground/40"
+                )}
+              >
+                <m.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <span>
+                  <span className="block text-sm font-semibold">{m.title}</span>
+                  <span className="block text-xs text-muted-foreground">{m.sub}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-border bg-surface p-6">
           <Label htmlFor="notes" className="text-base font-semibold text-foreground">
-            Order notes (optional)
+            {t("co.notes")}
           </Label>
           <Textarea
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             maxLength={500}
-            placeholder="Gift message, colour preference, delivery instructions…"
+            placeholder={t("co.notesPh")}
             className="mt-2 min-h-[80px]"
           />
         </section>
       </div>
 
       <aside className="h-fit rounded-3xl border border-border bg-surface p-6 lg:sticky lg:top-28">
-        <h2 className="text-lg font-semibold">Order summary</h2>
+        <h2 className="text-lg font-semibold">{t("co.summary")}</h2>
         <ul className="mt-4 space-y-3">
           {items.map((i) => (
             <li key={i.id} className="flex gap-3 text-sm">
@@ -389,7 +453,7 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
                   {i.quantity}
                 </span>
               </div>
-              <span className="flex-1 leading-tight">{i.name}</span>
+              <span className="flex-1 leading-tight">{loc(i.name, i.nameHi)}</span>
               <span className="font-medium">{formatPrice(i.price * i.quantity)}</span>
             </li>
           ))}
@@ -422,13 +486,13 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
               }}
             >
               <Input
-                placeholder="Coupon code"
+                placeholder={t("co.coupon")}
                 value={couponInput}
                 onChange={(e) => setCouponInput(e.target.value)}
                 className="h-10 uppercase"
               />
               <Button type="submit" variant="outline" className="h-10">
-                Apply
+                {t("co.apply")}
               </Button>
             </form>
           )}
@@ -436,14 +500,18 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
         </div>
 
         <dl className={cn("mt-5 space-y-2 text-sm transition-opacity", quoting && "opacity-50")}>
-          <Row label="Subtotal" value={formatPrice(priced?.subtotal ?? 0)} />
+          <Row label={t("cart.subtotal")} value={formatPrice(priced?.subtotal ?? 0)} />
           {!!priced?.discount && (
-            <Row label="Discount" value={`−${formatPrice(priced.discount)}`} className="text-success" />
+            <Row label={t("co.discount")} value={`−${formatPrice(priced.discount)}`} className="text-success" />
           )}
-          <Row label="Shipping" value={priced ? (priced.shipping ? formatPrice(priced.shipping) : "Free") : "—"} />
+          <Row
+            label={t("co.shipping")}
+            value={priced ? (priced.shipping ? formatPrice(priced.shipping) : t("co.free")) : "—"}
+          />
+          {useCod && <Row label={t("co.codFee")} value={formatPrice(codFee)} />}
           <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
-            <dt>Total</dt>
-            <dd>{formatPrice(priced?.total ?? 0)}</dd>
+            <dt>{t("co.total")}</dt>
+            <dd>{formatPrice(payable)}</dd>
           </div>
         </dl>
 
@@ -465,12 +533,16 @@ export default function CheckoutForm({ addresses, defaultName, mode }: Props) {
           className="mt-5 w-full"
           onClick={onPay}
           isLoading={paying}
-          disabled={!priced || quoting || mode === "disabled" || priced.lines.length === 0}
+          disabled={!priced || quoting || (!useCod && mode === "disabled") || priced.lines.length === 0}
         >
-          {mode === "test" ? "Place test order" : `Pay ${priced ? formatPrice(priced.total) : ""}`}
+          {useCod
+            ? t("co.placeCod").replace("{amount}", formatPrice(payable))
+            : mode === "test"
+              ? "Place test order"
+              : t("co.pay").replace("{amount}", priced ? formatPrice(payable) : "")}
         </Button>
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          UPI · Cards · Net banking · Wallets — secured by Razorpay
+          {useCod ? t("co.codNote") : t("co.onlineNote")}
         </p>
       </aside>
     </div>
